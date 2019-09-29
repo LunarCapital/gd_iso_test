@@ -27,9 +27,22 @@ func _ready():
 func _physics_process(delta):
 	if (sun != null): #update camera position
 		self.position = (sun.position + moon.position)/2;
-		#zoom out automatically?
-			#if sun&moon are ? distance apart, zoom out.
-			#OR if sun&moon are going outside the camera, zoom out?
+		#cam behaviour plan
+			#if sun&moon are going out of camera, zoom out
+			#if sun&moon are trying to go a certain distance from each other, ?
+				#prevent them from going further. problem if one of them is off-ledge.
+				#pull the two together?
+				#maybe some backline to frontline TP
+			#if player mouses to the edge of the screen, camera 'peeks' in that direction but will snap back later
+		print(get_viewport().get_mouse_position());
+		#if ~50 from any edge, peek in that direction
+		#if ~50 from corner, peek in corner
+		#PEEK BY MODIFYING SELF.POSITION
+			#important, i'm pretty sure other ways will break functionality by, for example:
+			#peek top, then quickly peek right, and camera doesn't fix itself
+			
+		#also think about if peeking affects the zoomout when players are on the edge
+		
 	if (cam_zoom == ZOOM_IN): #zoom in camera
 		if (self.zoom.x > cam_goal):
 			self.zoom = CAM_MIN_VECT if (self.zoom.x < (CAM_MIN + ANIM_STEP)) else self.zoom - ANIM_STEP_VECT;

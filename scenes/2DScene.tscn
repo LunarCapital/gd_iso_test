@@ -115,9 +115,9 @@ texture_under = ExtResource( 6 )
 texture_progress = ExtResource( 7 )
 [connection signal="area_entered" from="Node2D/Wall1/z_1" to="Node2D/Wall1/z_1" method="_on_z_area_entered"]
 [connection signal="health_changed" from="Node2D/Wall0/Sun" to="Node2D_UI/GUI" method="sun_health_changed"]
-[connection signal="player_initialised" from="Node2D/Wall0/Sun" to="Node2D/Camera2D" method="set_player"]
 [connection signal="player_initialised" from="Node2D/Wall0/Sun" to="Node2D_UI/GUI" method="set_player"]
-[connection signal="player_initialised" from="Node2D/Wall0/Moon" to="Node2D/Camera2D" method="set_player"]
+[connection signal="player_initialised" from="Node2D/Wall0/Sun" to="Node2D/Camera2D" method="set_player"]
 [connection signal="player_initialised" from="Node2D/Wall0/Moon" to="Node2D_UI/GUI" method="set_player"]
+[connection signal="player_initialised" from="Node2D/Wall0/Moon" to="Node2D/Camera2D" method="set_player"]
 [connection signal="area_entered" from="Node2D/Wall0/z_0" to="Node2D/Wall0/z_0" method="_on_z_area_entered"]
 [connection signal="camera_initialised" from="Node2D/Camera2D" to="Node2D_UI/GUI" method="set_camera"]
