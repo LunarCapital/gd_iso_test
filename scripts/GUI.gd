@@ -1,5 +1,7 @@
 extends Control
 
+#Should i have some signal-connection call that runs at the start of every scene?
+
 #GUI Elements
 onready var sun_bar = $hbar_test/TextureProgress
 onready var tween = $Tween
@@ -37,13 +39,13 @@ func update_health(bar, value):
 func set_player(node):
 	if (node.name == "Sun"):
 		if (sun == null): #if initialising sun for first time
-			node.player_role = FRONTLINE;
+			node.player_role = BACKLINE;
 		else:
 			node.player_role = sun.player_role;
 		sun = node;
 	elif (node.name == "Moon"):
 		if (moon == null): #if initialising for first time
-			node.player_role = BACKLINE;
+			node.player_role = FRONTLINE;
 		else:
 			node.player_role = moon.player_role;
 		moon = node;

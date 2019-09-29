@@ -8,15 +8,24 @@ signal health_changed(value);
 enum {BACKLINE = -1, FRONTLINE = 1}
 const DEST_THRESHOLD = 3;
 const MOTION_SPEED = 200 # Pixels/second
+const DASH_DELAY = 0.1; #P control
+const DASH_MAX_DIST = 250;
+const DASH_EPSILON = 50;
+const DASH_CD = 3; #seconds
 
 #globals
-var player_role;
-var destination : Vector2;
+var player_role : int;
+var walk_goal : Vector2;
+var dashing : bool;
+var dash_goal : Vector2;
+var dash_cd : float;
 
 func _ready():
 	emit_signal("player_initialised", self);
-	destination = self.position;
-	
+	walk_goal = self.position;
+	dashing = false;
+	dash_goal = self.position;
+	dash_cd = 0;	
 
 func _physics_process(delta):
 	var motion = Vector2()
@@ -31,21 +40,46 @@ func _physics_process(delta):
 		if Input.is_action_pressed("move_right"):
 			motion += Vector2(1, 0)
 	elif (player_role == BACKLINE): #backline uses mouse movement
-		var dest_epsilon = (destination - self.position).abs();
-		if (Input.is_action_pressed("move_mouse")):
-			destination = get_global_mouse_position();
-		if (dest_epsilon.x > DEST_THRESHOLD || dest_epsilon.y > DEST_THRESHOLD):
-			motion = (destination - self.position);
+		if (dashing):
+			if ((self.position - dash_goal).abs().length() > DASH_EPSILON):
+				var dash_diff = dash_goal - self.position;
+				motion = (dash_diff)/DASH_DELAY;
+			else: #doesn't account for if we collide
+				dashing = false;
+		else: #not dashing
+			var dest_epsilon = (walk_goal - self.position).abs();
+			if (Input.is_action_pressed("move_mouse")):
+				walk_goal = get_global_mouse_position();
+			if (dest_epsilon.x > DEST_THRESHOLD || dest_epsilon.y > DEST_THRESHOLD):
+				motion = (walk_goal - self.position);
+			motion = motion.normalized() * MOTION_SPEED;
 
-	if Input.is_action_pressed("move_jump"): #currently a debug key
-		emit_signal("health_changed", 50);
-		pass;
-			
-	motion = motion.normalized() * MOTION_SPEED
+	var velocity = move_and_slide(motion);
+	if (dashing and velocity.length() < 1): #hit a wall while dashing
+		dashing = false;
+		
+	cycle_cooldowns(delta);
 
-	move_and_slide(motion)
 
+func _input(event):
+	if event is InputEventMouseButton:
+		if event.is_pressed():
+			if event.button_index == BUTTON_WHEEL_UP:
+				pass; #block
+			if (event.button_index == BUTTON_WHEEL_DOWN and dash_cd <= 0): #dash
+				var dash_dest = get_global_mouse_position();
+				if (self.position.distance_to(dash_dest) > DASH_MAX_DIST):
+					var dash_diff = (dash_dest - self.position).normalized();
+					dash_dest = self.position + dash_diff*DASH_MAX_DIST;
+				walk_goal = dash_dest;
+				dash_goal = dash_dest;
+				dashing = true;
+				dash_cd = DASH_CD;
 	
+func cycle_cooldowns(delta):
+	if (dash_cd > 0):
+		dash_cd -= delta;
+
 #jumping mechanics:
 	#jumping allows players to move through colliders that are ONE Z LEVEL HIGHER THAN THE PLAYER'S Z LEVEL.
 	#Player will gain a certain height, then drop a certain height.
