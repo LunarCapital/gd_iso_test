@@ -1,0 +1,8 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://scenes/Players/Player.tscn" type="PackedScene" id=1]
+[ext_resource path="res://scripts/Players/Moon.gd" type="Script" id=2]
+
+[node name="Moon" instance=ExtResource( 1 )]
+script = ExtResource( 2 )
+MOBILITY_DELAY = 0.05
