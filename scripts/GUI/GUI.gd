@@ -11,8 +11,9 @@ and using this node as some 'parent communication' node that passes information 
 const LISTENER_UPDATE_CAM_POS = "_update_cam_pos";
 
 #GUI Elements
-onready var front_bar = find_node("HBoxFrontline").TextureProgress
-onready var back_bar = find_node("HBoxBackline").TextureProgress
+onready var front_bar = find_node("TextureFrontline");
+onready var back_bar = find_node("TextureBackline");
+onready var front_label = find_node("LabelFrontline");
 onready var tween = $Tween
 onready var fps_label = find_node("FPSLabel");
 
