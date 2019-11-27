@@ -29,6 +29,8 @@ func setup_signals():
 	var _connect;
 	_connect = sun.connect(sun.SIGNAL_CHANGED_POSITION, PlayerStats, PlayerStats.LISTENER_UPDATE_PLAYER_POS);
 	_connect = moon.connect(moon.SIGNAL_CHANGED_POSITION, PlayerStats, PlayerStats.LISTENER_UPDATE_PLAYER_POS);
+	_connect = sun.connect(sun.SIGNAL_CHANGED_HEALTH, PlayerStats, PlayerStats.LISTENER_UPDATE_PLAYER_HP);
+	_connect = moon.connect(moon.SIGNAL_CHANGED_HEALTH, PlayerStats, PlayerStats.LISTENER_UPDATE_PLAYER_HP);
 	_connect = PlayerStats.connect(PlayerStats.SIGNAL_PLAYERS_MOVED_TOO_FAR, sun, sun.LISTENER_CLOSE_PLAYER_DISTANCE);
 	_connect = PlayerStats.connect(PlayerStats.SIGNAL_PLAYERS_MOVED_TOO_FAR, moon, moon.LISTENER_CLOSE_PLAYER_DISTANCE);
 	_connect = PlayerStats.connect(PlayerStats.SIGNAL_PLAYERS_MOVED_CLOSER, sun, sun.LISTENER_PLAYERS_CLOSE_ENOUGH);

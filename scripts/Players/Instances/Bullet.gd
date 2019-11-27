@@ -18,7 +18,7 @@ const SPEED = 1000;
 #variables
 var direction : Vector2;
 
-func init(start_pos, goal_pos):
+func init(start_pos : Vector2, goal_pos : Vector2):
 	self.position = start_pos;
 	direction = (goal_pos - start_pos).normalized();
 	

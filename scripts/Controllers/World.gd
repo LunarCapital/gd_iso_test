@@ -13,7 +13,7 @@ const LISTENER_PLAYER_SHOT = "_on_player_shot";
 #module loading
 var damage_control = preload("res://scripts/Controllers/Damage.gd").new();
 
-func _on_player_shot(shooter, shot_type, goal):
+func _on_player_shot(shooter : Player, shot_type, goal : Vector2):
 	var tileset = shooter.get_parent(); 
 	if (!tileset):
 		print("Shooter has no parent, unable to place shooting instance.");

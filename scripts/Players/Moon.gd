@@ -10,9 +10,22 @@ Has different actions to the default player class.  Refer to doc for a full list
 const PLAYER_Z_AREA_NAME = "PlayerArea";
 const Z_AREA_GROUP_NAME = "ZAreas";
 
+#TEMP DEBUG
+export (NodePath) var path_floor;
+export (NodePath) var path_wall0;
+export (NodePath) var path_wall1;
+onready var tm_floor : TileMap = get_node(path_floor);
+onready var tm_wall0 : TileMap = get_node(path_wall0);
+onready var tm_wall1 : TileMap = get_node(path_wall1);
+
 func _physics_process(_delta):
 	var motion = Vector2()
 	
+	#TEMP_POS_CHECK
+	#print("floor: " + str(tm_floor.get_cellv(tm_floor.world_to_map(self.position))));
+	#print("wall0: " + str(tm_wall0.get_cellv(tm_wall0.world_to_map(self.position))));
+	#print("wall1: " + str(tm_wall1.get_cellv(tm_wall1.world_to_map(self.position))));
+		
 	if (player_role == Globals.FRONTLINE): #frontline uses WASD movement
 		if (mobility):
 			motion = get_dash_motion(); 
@@ -23,9 +36,7 @@ func _physics_process(_delta):
 		pass;
 
 	if Input.is_action_pressed("move_jump"): #currently a debug key
-		#print("my pos is: " + str(self.position));
-		#print($PlayerArea.get_overlapping_areas());
-		#emit_signal("health_changed", 50);
+		emit_signal(SIGNAL_CHANGED_HEALTH, self.name, PlayerStats.moon_hp - 10);
 		pass;
 		
 

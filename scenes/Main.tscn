@@ -1,56 +1,58 @@
-[gd_scene load_steps=9 format=2]
+[gd_scene load_steps=10 format=2]
 
 [ext_resource path="res://scripts/Controllers/Main.gd" type="Script" id=1]
-[ext_resource path="res://assets/tilesets/simple.tres" type="TileSet" id=2]
-[ext_resource path="res://scripts/World/z_area.gd" type="Script" id=3]
-[ext_resource path="res://scenes/Players/Moon.tscn" type="PackedScene" id=4]
-[ext_resource path="res://scenes/Players/Sun.tscn" type="PackedScene" id=5]
-[ext_resource path="res://scenes/Enemies/Enemy.tscn" type="PackedScene" id=6]
-[ext_resource path="res://scripts/Camera/2PCam.gd" type="Script" id=7]
-[ext_resource path="res://scenes/GUI/GUI.tscn" type="PackedScene" id=8]
+[ext_resource path="res://scripts/World/WorldTemplate.gd" type="Script" id=2]
+[ext_resource path="res://assets/tilesets/simple.tres" type="TileSet" id=3]
+[ext_resource path="res://scripts/World/z_area.gd" type="Script" id=4]
+[ext_resource path="res://scenes/Players/Moon.tscn" type="PackedScene" id=5]
+[ext_resource path="res://scenes/Players/Sun.tscn" type="PackedScene" id=6]
+[ext_resource path="res://scenes/Enemies/Enemy.tscn" type="PackedScene" id=7]
+[ext_resource path="res://scripts/Camera/2PCam.gd" type="Script" id=8]
+[ext_resource path="res://scenes/GUI/GUI.tscn" type="PackedScene" id=9]
 
 [node name="Main" type="Node"]
 script = ExtResource( 1 )
 
 [node name="World" type="Node2D" parent="."]
+script = ExtResource( 2 )
 
 [node name="Floor" type="TileMap" parent="World"]
 position = Vector2( -1, -1 )
 scale = Vector2( 0.998574, 1 )
 mode = 1
-tile_set = ExtResource( 2 )
+tile_set = ExtResource( 3 )
 cell_size = Vector2( 256, 128 )
 cell_tile_origin = 1
+collision_layer = 33
+collision_mask = 5
 format = 1
-tile_data = PoolIntArray( -196604, 1, 0, -196603, 1, 0, -131072, 1, 0, -131071, 1, 0, -131070, 1, 0, -131069, 1, 0, -131068, 1, 0, -131067, 1, 0, -65536, 1, 0, -65535, 1, 0, -65534, 1, 0, -65533, 1, 0, -65532, 1, 0, -65531, 1, 0, 0, 1, 0, 1, 1, 0, 2, 1, 0, 3, 1, 0, 4, 1, 0, 5, 1, 0, 65536, 1, 0, 65537, 1, 0, 65538, 1, 0, 65539, 1, 0, 65540, 1, 0, 65541, 1, 0, 196607, 1, 0, 131072, 1, 0, 131073, 1, 0, 131074, 1, 0, 131075, 1, 0, 131076, 1, 0, 131077, 1, 0, 262143, 1, 0, 196608, 1, 0, 196609, 1, 0, 196610, 1, 0, 196611, 1, 0, 196612, 1, 0, 196613, 1, 0 )
+tile_data = PoolIntArray( 131072, 1, 0, 131073, 1, 0, 262140, 1, 0, 262142, 1, 0, 262143, 1, 0, 196608, 4, 0, 327676, 1, 0, 327678, 4, 0, 458749, 6, 0 )
 
 [node name="Wall1" type="TileMap" parent="World"]
 z_index = 1
 mode = 1
-tile_set = ExtResource( 2 )
+tile_set = ExtResource( 3 )
 cell_size = Vector2( 256, 128 )
 cell_tile_origin = 1
 cell_y_sort = true
-collision_layer = 3
+collision_layer = 35
 collision_mask = 4
 format = 1
-tile_data = PoolIntArray( -524293, 5, 0, -524292, 5, 0, -524291, 5, 0, -524290, 5, 0, -524289, 5, 0, -589824, 5, 0, -589823, 5, 0, -589822, 5, 0, -458757, 5, 0, -393221, 5, 0, -327685, 5, 0, -393216, 5, 0, -393215, 5, 0, -262149, 5, 0, -327680, 5, 0, -327679, 5, 0, -196613, 5, 0, -131077, 5, 0, -65541, 5, 0, -5, 5, 0, 65531, 5, 0, 131076, 5, 0 )
+tile_data = PoolIntArray( -589830, 5, 0, -589829, 5, 0, -589828, 5, 0, -589827, 5, 0, -589826, 5, 0, -589825, 5, 0, -655360, 5, 0, -655359, 5, 0, -524294, 5, 0, -458758, 5, 0, -393222, 5, 0, -393217, 5, 0, -458752, 5, 0, -327686, 5, 0, -327681, 5, 0, -393216, 5, 0, -262150, 5, 0, -196614, 5, 0, -131078, 5, 0, -65542, 5, 0, -6, 5, 0, 131076, 5, 0 )
 
 [node name="z_1" type="Area2D" parent="World/Wall1" groups=[
 "ZAreas",
 ]]
-editor/display_folded = true
 z_index = 1
 z_as_relative = false
 collision_layer = 2
 collision_mask = 4
-script = ExtResource( 3 )
+script = ExtResource( 4 )
 
 [node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="World/Wall1/z_1"]
 polygon = PoolVector2Array( 127.379, -64.362, 255.379, -0.362, 327.379, -108.362, 199.379, -172.362 )
 
 [node name="StaticBody2D" type="StaticBody2D" parent="World/Wall1"]
-editor/display_folded = true
 collision_mask = 0
 
 [node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="World/Wall1/StaticBody2D"]
@@ -58,46 +60,47 @@ polygon = PoolVector2Array( -768.621, -384.362, -640.621, -320.362, 511.379, -89
 
 [node name="Wall0" type="TileMap" parent="World"]
 mode = 1
-tile_set = ExtResource( 2 )
+tile_set = ExtResource( 3 )
 cell_size = Vector2( 256, 128 )
 cell_tile_origin = 1
 cell_y_sort = true
-collision_layer = 3
+collision_layer = 35
 collision_mask = 4
 format = 1
-tile_data = PoolIntArray( -393219, 6, 0, -393218, 6, 0, -393217, 6, 0, -458752, 6, 0, -458751, 6, 0, -458750, 6, 0, -458749, 6, 0, -327683, 6, 0, -327682, 6, 0, -327681, 6, 0, -393216, 6, 0, -393215, 6, 0, -393214, 6, 0, -393213, 6, 0, -262147, 6, 0, -262146, 6, 0, -262145, 6, 0, -327680, 6, 0, -327679, 3, 0, -327678, 6, 0, -327677, 6, 0, -196611, 6, 0, -196610, 6, 0, -196609, 6, 0, -262144, 6, 0, -262143, 6, 0, -262142, 6, 0, -262141, 6, 0, -131075, 6, 0, -131074, 6, 0, -131073, 6, 0, -196608, 6, 0, -196607, 6, 0, -196606, 6, 0, -196605, 6, 0, -65539, 6, 0, -65538, 6, 0, -65537, 6, 0, -131072, 4, 0, -3, 6, 0, -2, 6, 0, -1, 6, 0, 65533, 6, 0, 65534, 6, 0, 65535, 6, 0, 2, 6, 0, 131069, 6, 0, 131070, 6, 0, 131071, 6, 0, 65541, 0, 0, 196613, 6, 0 )
+tile_data = PoolIntArray( -458756, 6, 0, -458755, 6, 0, -458754, 6, 0, -458753, 6, 0, -524288, 6, 0, -524287, 6, 0, -524286, 6, 0, -393220, 6, 0, -393219, 6, 0, -393218, 6, 0, -393217, 6, 0, -458752, 6, 0, -458751, 6, 0, -458750, 6, 0, -327684, 6, 0, -327683, 6, 0, -327682, 6, 0, -327681, 6, 0, -393216, 6, 0, -393215, 6, 0, -393214, 6, 0, -262148, 6, 0, -262147, 6, 0, -262146, 6, 0, -262145, 6, 0, -327680, 6, 0, -327679, 6, 0, -327678, 6, 0, -196612, 6, 0, -196611, 6, 0, -196610, 6, 0, -196609, 6, 0, -262144, 6, 0, -262143, 6, 0, -262142, 6, 0, -131076, 6, 0, -131075, 6, 0, -131074, 6, 0, -131073, 4, 0, -65540, 6, 0, -65539, 6, 0, -65538, 6, 0, -4, 6, 0, -3, 6, 0, -2, 6, 0, -65535, 6, 0, 65532, 6, 0, 65533, 6, 0, 65534, 6, 0, 65541, 0, 0, 196613, 6, 0 )
 
 [node name="Moon" parent="World/Wall0" groups=[
 "Players",
-] instance=ExtResource( 4 )]
+] instance=ExtResource( 5 )]
+path_floor = NodePath("../../Floor")
+path_wall0 = NodePath("..")
+path_wall1 = NodePath("../../Wall1")
 
 [node name="Sun" parent="World/Wall0" groups=[
 "Players",
-] instance=ExtResource( 5 )]
+] instance=ExtResource( 6 )]
 position = Vector2( -172, 152 )
 
 [node name="Enemy" parent="World/Wall0" groups=[
 "Enemies",
-] instance=ExtResource( 6 )]
+] instance=ExtResource( 7 )]
 position = Vector2( 36, 308 )
 
-[node name="Enemy2" parent="World/Wall0" instance=ExtResource( 6 )]
+[node name="Enemy2" parent="World/Wall0" instance=ExtResource( 7 )]
 position = Vector2( -164, 356 )
 
 [node name="z_0" type="Area2D" parent="World/Wall0" groups=[
 "ZAreas",
 ]]
-editor/display_folded = true
 z_as_relative = false
 collision_layer = 2
 collision_mask = 4
-script = ExtResource( 3 )
+script = ExtResource( 4 )
 
 [node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="World/Wall0/z_0"]
 polygon = PoolVector2Array( 103.379, -52.3625, 255.379, 23.6375, 279.379, 11.6375, 295.379, 19.6375, 255.379, 39.6375, 87.3793, -44.3625 )
 
 [node name="StaticBody2D" type="StaticBody2D" parent="World/Wall0"]
-editor/display_folded = true
 collision_mask = 0
 
 [node name="CollisionPolygon2D2" type="CollisionPolygon2D" parent="World/Wall0/StaticBody2D"]
@@ -118,9 +121,9 @@ polygon = PoolVector2Array( 127.379, 191.638, 255.379, 127.638, 383.379, 191.638
 current = true
 drag_margin_h_enabled = false
 drag_margin_v_enabled = false
-script = ExtResource( 7 )
+script = ExtResource( 8 )
 
 [node name="GUI_Main" type="Node2D" parent="."]
 z_index = 999
 
-[node name="GUI" parent="GUI_Main" instance=ExtResource( 8 )]
+[node name="GUI" parent="GUI_Main" instance=ExtResource( 9 )]

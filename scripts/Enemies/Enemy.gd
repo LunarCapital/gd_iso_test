@@ -15,5 +15,5 @@ export(int) var HEALTH = 10
 func _ready():
 	hp_bar.setup_hpbar(HEALTH);
 	
-func take_damage(damage):
+func take_damage(damage : int):
 	hp_bar.value -= damage;

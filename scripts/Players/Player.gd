@@ -9,8 +9,9 @@ Considering breaking up into smaller scripts, aka:
 """
 
 #signals 
-signal health_changed(value);
-signal _changed_position(pos, my_name, my_role);
+signal _changed_health(my_name, value);
+const SIGNAL_CHANGED_HEALTH = "_changed_health";
+signal _changed_position(my_name, pos, my_role);
 const SIGNAL_CHANGED_POSITION = "_changed_position";
 
 #listeners
@@ -62,7 +63,7 @@ func _physics_process(delta):
 		close_distance_velocity = move_and_slide(_motion);
 		
 		
-	emit_signal(SIGNAL_CHANGED_POSITION, self.position, self.name, self.player_role);
+	emit_signal(SIGNAL_CHANGED_POSITION, self.name, self.position, self.player_role);
 	cycle_cooldowns(delta);
 
 func get_front_walk_motion():
@@ -81,7 +82,7 @@ func get_front_walk_motion():
 	
 	return motion;
 
-func get_front_dash_motion(motion):
+func get_front_dash_motion(motion : Vector2):
 	if (motion.length() > 0):
 		var mobility_dest = motion.normalized() * MOBILITY_MAX_DIST + self.position;
 		mobility_goal = mobility_dest;
@@ -125,6 +126,6 @@ func close_distance_to_partner():
 		close_distance = false;
 	return motion;
 					
-func cycle_cooldowns(delta):
+func cycle_cooldowns(delta : float):
 	if (mobility_cd > 0):
 		mobility_cd -= delta;

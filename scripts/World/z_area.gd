@@ -6,13 +6,12 @@ This is done by re-parenting the entity to a different tileset.
 """
 
 func _ready():
-	# warning-ignore:return_value_discarded
 	self.connect("area_entered", self, "_on_z_area_entered");
 
-func _on_z_area_entered(area):
+func _on_z_area_entered(area : Area2D):
 	call_deferred("move_child_across_parents", area);
 
-func move_child_across_parents(area):
+func move_child_across_parents(area : Area2D):
 	var new_parent = self.get_parent();
 	var entity = area.get_parent();
 	var old_parent = entity.get_parent();
