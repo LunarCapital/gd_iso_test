@@ -1,10 +1,10 @@
 extends Node2D
 
 #signals
-signal players_moved_too_far(move);
-const SIGNAL_PLAYERS_MOVED_TOO_FAR = "players_moved_too_far";
-signal players_moved_closer();
-const SIGNAL_PLAYERS_MOVED_CLOSER = "players_moved_closer";
+signal _players_moved_too_far(move);
+const SIGNAL_PLAYERS_MOVED_TOO_FAR = "_players_moved_too_far";
+signal _players_moved_closer();
+const SIGNAL_PLAYERS_MOVED_CLOSER = "_players_moved_closer";
 
 #listeners
 const LISTENER_UPDATE_PLAYER_POS = "_update_player_pos";
@@ -38,7 +38,7 @@ func _update_player_hp(emitter_name : String, hp : int):
 
 func _physics_process(_delta):
 	correct_distance_apart();
-	self.update();
+	self.update(); #can't remember if i need this
 		
 """
 Prevents players from moving too far from each other.

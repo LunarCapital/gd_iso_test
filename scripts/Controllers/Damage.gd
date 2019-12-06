@@ -1,4 +1,4 @@
-extends Node2D
+extends Resource
 """
 Damage controller.
 
@@ -10,5 +10,5 @@ and a damage formula if required.
 const LISTENER_DAMAGE_ENTITY = "_on_damage_entity";
 
 func _on_damage_entity(entity):
-	if (entity is Globals.Enemy):
+	if (entity is Enemy):
 		entity.take_damage(1);

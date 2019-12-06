@@ -9,6 +9,8 @@ For example, damage calculations for when the bullet instance emits a signal ale
 
 #module loading
 onready var world_control = preload("res://scripts/Controllers/World.gd").new();
+onready var world : Node2D = self.find_node("World"); #eventually replace with a tracker on the level we have loaded (or maybe leave that for the world resource)
+	
 
 #resource loading
 onready var sun = find_node("Sun");
@@ -23,12 +25,17 @@ func _ready():
 	sun.player_role = Globals.BACKLINE;
 	moon.player_role = Globals.FRONTLINE;
 	
-	setup_signals();
+	setup_base_signals();
+	setup_level_signals();
+	world_control.call_deferred("init_z_tracker", world);
 	
-func setup_signals():
+func _process(delta):
+	world_control.print_moon_pos();
+	
+func setup_base_signals():
 	var _connect;
-	_connect = sun.connect(sun.SIGNAL_CHANGED_POSITION, PlayerStats, PlayerStats.LISTENER_UPDATE_PLAYER_POS);
-	_connect = moon.connect(moon.SIGNAL_CHANGED_POSITION, PlayerStats, PlayerStats.LISTENER_UPDATE_PLAYER_POS);
+	_connect = sun.connect(sun.SIGNAL_CHANGED_PLAYER_POSITION, PlayerStats, PlayerStats.LISTENER_UPDATE_PLAYER_POS);
+	_connect = moon.connect(moon.SIGNAL_CHANGED_PLAYER_POSITION, PlayerStats, PlayerStats.LISTENER_UPDATE_PLAYER_POS);
 	_connect = sun.connect(sun.SIGNAL_CHANGED_HEALTH, PlayerStats, PlayerStats.LISTENER_UPDATE_PLAYER_HP);
 	_connect = moon.connect(moon.SIGNAL_CHANGED_HEALTH, PlayerStats, PlayerStats.LISTENER_UPDATE_PLAYER_HP);
 	_connect = PlayerStats.connect(PlayerStats.SIGNAL_PLAYERS_MOVED_TOO_FAR, sun, sun.LISTENER_CLOSE_PLAYER_DISTANCE);
@@ -39,3 +46,19 @@ func setup_signals():
 	_connect = camera2d.connect(camera2d.SIGNAL_CHANGED_POSITION, gui, gui.LISTENER_UPDATE_CAM_POS);
 	
 	_connect = sun.connect(sun.SIGNAL_SHOT_BULLET, world_control, world_control.LISTENER_PLAYER_SHOT);
+
+"""
+Sets up signals for the level's Area2D floors and wall colliders if needed.
+"""
+func setup_level_signals():
+	var area2ds : Array = [];
+	for tilemap in world.get_children():
+		if tilemap is TileMap:
+			for child in tilemap.get_children():
+				if child is Area2D:
+					area2ds.append(child);
+					
+	var _connect;
+	for i in range(area2ds.size()):
+		_connect = area2ds[i].connect(area2ds[i].SIGNAL_ENTITY_ENTERED_AREA, world_control, world_control.LISTENER_ON_AREA_ENTERED);
+		_connect = area2ds[i].connect(area2ds[i].SIGNAL_ENTITY_EXITED_AREA, world_control, world_control.LISTENER_ON_AREA_EXITED);

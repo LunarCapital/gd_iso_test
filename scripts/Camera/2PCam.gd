@@ -6,8 +6,8 @@ Also can peek in eight directions if the player moves the mouse to the edges of 
 """
 
 #signals
-signal changed_position(pos, zoom);
-const SIGNAL_CHANGED_POSITION = "changed_position";
+signal _changed_position(pos, zoom);
+const SIGNAL_CHANGED_POSITION = "_changed_position";
 
 #constants
 const CAM_DELAY = 10;

@@ -12,22 +12,27 @@ _global_script_classes=[ {
 "base": "KinematicBody2D",
 "class": "Bullet",
 "language": "GDScript",
-"path": "res://scripts/Players/Instances/Bullet.gd"
+"path": "res://scripts/Entities/Players/Instances/Bullet.gd"
 }, {
 "base": "Reference",
 "class": "Edge",
 "language": "GDScript",
 "path": "res://scripts/World/WorldUtilities/Edge.gd"
 }, {
-"base": "KinematicBody2D",
+"base": "Entity",
 "class": "Enemy",
 "language": "GDScript",
-"path": "res://scripts/Enemies/Enemy.gd"
+"path": "res://scripts/Entities/Enemies/Enemy.gd"
 }, {
 "base": "KinematicBody2D",
+"class": "Entity",
+"language": "GDScript",
+"path": "res://scripts/Entities/Entity.gd"
+}, {
+"base": "Entity",
 "class": "Player",
 "language": "GDScript",
-"path": "res://scripts/Players/Player.gd"
+"path": "res://scripts/Entities/Players/Player.gd"
 }, {
 "base": "Reference",
 "class": "Polygon",
@@ -38,6 +43,7 @@ _global_script_class_icons={
 "Bullet": "",
 "Edge": "",
 "Enemy": "",
+"Entity": "",
 "Player": "",
 "Polygon": ""
 }
@@ -70,6 +76,29 @@ window/size/fullscreen=true
 window/vsync/use_vsync=false
 window/stretch/mode="viewport"
 window/stretch/aspect="keep"
+
+[importer_defaults]
+
+texture={
+"compress/bptc_ldr": 0,
+"compress/hdr_mode": 0,
+"compress/lossy_quality": 0.7,
+"compress/mode": 0,
+"compress/normal_map": 0,
+"detect_3d": false,
+"flags/anisotropic": false,
+"flags/filter": false,
+"flags/mipmaps": false,
+"flags/repeat": 0,
+"flags/srgb": 2,
+"process/HDR_as_SRGB": false,
+"process/fix_alpha_border": true,
+"process/invert_color": false,
+"process/premult_alpha": false,
+"size_limit": 0,
+"stream": false,
+"svg/scale": 1.0
+}
 
 [input]
 
@@ -122,6 +151,7 @@ act_mouse={
 2d_physics/layer_4="enemies"
 2d_physics/layer_5="player_instance"
 2d_physics/layer_6="tilemaps"
+2d_physics/layer_7="personal_walls"
 
 [rendering]
 

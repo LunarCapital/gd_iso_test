@@ -15,7 +15,7 @@ var tilemaps : Array = [];
 enum {UNCONNECTED = 0, CONNECTED = 1}
 
 func _ready():
-	tilemaps.resize(20); #replace with some global 'max_z_lvl' later
+	tilemaps.resize(Globals.Z_LIMIT); #replace with some global 'max_z_lvl' later
 	fill_tilemaps_array();
 	create_tilemap_area2d();
 
@@ -27,17 +27,8 @@ func fill_tilemaps_array():
 	for child in all_children:
 		if (child.get_class() != "TileMap"):
 			continue;
-
-		if (child.name == "Floor"): #a bit of hardcoding still triggers me
-			tilemaps[0] = child;
-		else: #if name contains a number
-			var child_name = child.name;
-			var regex = RegEx.new();
-			regex.compile("\\d+");
-			var child_result = regex.search(child_name);
-			if (child_result):
-				var child_number = int(child_result.get_string());
-				tilemaps[child_number+1] = child;
+			
+		tilemaps[child.z_index] = child; #assumes that all tilemaps have differing z-indexes
 
 """
 Creates an area2D based off a tilemap's walkable tile areas.
@@ -47,13 +38,13 @@ func create_tilemap_area2d():
 		var tilemap = tilemaps[n];
 		if (tilemap):
 			var area2d = Area2D.new();
-			area2d.name = "AreaFloor" if tilemap.name == "Floor" else ("Area" + str(n-1));
+			area2d.name = ("Area" + str(n));
 			tilemap.add_child(area2d);
+			
+			var staticbody2d = StaticBody2D.new();
+			staticbody2d.name = Globals.STATIC_BODY_WALLS_NAME;
+			tilemap.add_child(staticbody2d);
 
-			#get vertices
-			if (tilemap.name != "Floor"): #just for floor at first
-				continue;
-				
 			var adj_matrix : Array = init_adj_matrix(tilemap.get_used_cells().size());
 			var polygons = fill_polygons(tilemap, adj_matrix);
 
@@ -65,20 +56,28 @@ func create_tilemap_area2d():
 					color_max += 1;
 
 			var edges : Array = fill_edges(polygons, color_max);
-
+			
 			var smoothed_edges : Array = fill_smoothed_edges(edges); #Create smoothed edges array in same format of edges array
 
 			for i in range(smoothed_edges.size()): #make collisionpoly2d for each tile group
-				var cp2d = CollisionPolygon2D.new();
-				cp2d.name = "CollisionPolygon2D";
-				var polygon_vertices : PoolVector2Array = [];
-				for j in range(smoothed_edges[i].size()):
-					polygon_vertices.append(smoothed_edges[i][j].a);
-				cp2d.set_polygon(polygon_vertices);
-				area2d.add_child(cp2d);
+				var cp2d_area = construct_collision_poly(smoothed_edges[i]); #floor area
+				var cp2d_walls = construct_collision_poly(smoothed_edges[i]); #walls (edges of floor)
+				cp2d_walls.build_mode = CollisionPolygon2D.BUILD_SEGMENTS;
+				area2d.add_child(cp2d_area);
+				staticbody2d.add_child(cp2d_walls);
+				staticbody2d.set_collision_mask(16);
+				
+				if (n > 0): #If we're NOT on the floor layer
+					var cp2d_lower_walls = cp2d_walls.duplicate();
+					var lower_walls_poly = cp2d_walls.get_polygon();
+					for j in range(lower_walls_poly.size()):
+						lower_walls_poly[j] += Vector2(0, 64);
+					cp2d_lower_walls.set_polygon(lower_walls_poly);
+					tilemaps[n-1].find_node(Globals.STATIC_BODY_WALLS_NAME, false, false).add_child(cp2d_lower_walls);
 				
 			area2d.set_script(walkable_area_script);
 			area2d.connect("area_entered", area2d, area2d.LISTENER_ON_AREA_ENTERED);
+			area2d.connect("area_exited", area2d, area2d.LISTENER_ON_AREA_EXITED);
 			area2d.collision_layer = (2);
 			area2d.collision_mask = (12);
 
@@ -95,7 +94,7 @@ Used to obtain a tile's vertexes in a scene's space using its origin and tileset
 func shift_vertices(tile_vertices : Array, origin : Vector2):
 	var vertices = [];
 	for vertex in tile_vertices:
-		vertices.append(origin + vertex);
+		vertices.append(origin + vertex + Vector2(0, -64));
 	return vertices;
 
 """
@@ -123,7 +122,6 @@ func fill_polygons(tilemap : TileMap, adj_matrix : Array):
 		var navpoly = tileset.tile_get_navigation_polygon(cell_id);
 
 		if (navpoly):
-			print(tileset.tile_get_name(cell_id));
 			var vertices = shift_vertices(navpoly.get_vertices(), origin);
 			var new_polygon = Polygon.new();
 
@@ -173,6 +171,7 @@ func fill_smoothed_edges(edges : Array):
 	for i in range(edges.size()): 
 		var unchecked_edges : Array = get_unchecked_edges(edges[i]);
 		while (unchecked_edges.size() > 0): #WHILE THERE ARE STILL UNCHECKED EDGES
+		
 			var grabbed_edge : Edge;
 			var previous_edge : Edge;
 
@@ -183,9 +182,9 @@ func fill_smoothed_edges(edges : Array):
 			else: #ELSE grab an edge that SHARES a coordinate with previously grabbed edge;
 				previous_edge = smoothed_edges[i].back();
 				grabbed_edge = grab_shared_edge(unchecked_edges, previous_edge);
+				
 				check_edge(edges, i, grabbed_edge);
-				var grabbed_edge_index = edges[i].find(grabbed_edge);
-				if (grabbed_edge == previous_edge): #something's gone wrong
+				if (grabbed_edge == previous_edge): #no more edges to grab that extend off polygon, but tilemap has a hole. (need to extend algorithm in order to fix this)
 					print("FAILED TO EXTEND EDGE");
 					print("previous edge: " + str(previous_edge.a) + ", " + str(previous_edge.b));
 					print("grabbed edge: " + str(grabbed_edge.a) + ", " + str(grabbed_edge.b));
@@ -279,6 +278,16 @@ func check_edge(edges : Array, group_index : int, edge : Edge):
 	var edge_index = edges[group_index].find(edge);
 	if (edge_index != -1):
 		edges[group_index][edge_index].checked = true;
+
+func construct_collision_poly(smoothed_edges : Array):
+	var cp2d = CollisionPolygon2D.new();
+	cp2d.name = "CollisionPolygon2D";
+	var polygon_vertices : PoolVector2Array = [];
+	for i in range(smoothed_edges.size()):
+		polygon_vertices.append(smoothed_edges[i].a);
+	cp2d.set_polygon(polygon_vertices);
+	
+	return cp2d;
 
 """
 Init an empty 2D array of some size. 
