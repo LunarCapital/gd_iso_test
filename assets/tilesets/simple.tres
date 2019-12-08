@@ -24,7 +24,7 @@ polygons = [ PoolIntArray( 0, 1, 2, 3 ) ]
 [resource]
 0/name = "template_block.png 0"
 0/texture = ExtResource( 1 )
-0/tex_offset = Vector2( -64, -96 )
+0/tex_offset = Vector2( -64, -98 )
 0/modulate = Color( 1, 1, 1, 1 )
 0/region = Rect2( 0, 0, 128, 128 )
 0/tile_mode = 0

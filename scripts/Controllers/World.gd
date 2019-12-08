@@ -251,7 +251,7 @@ func trigger_falling(entity : Entity, tilemap : TileMap, current_tile : Vector2,
 			entity_colliders[entity][EAST_WALL].set_disabled(true);
 			entity_colliders[entity][SOUTH_WALL].set_disabled(true);
 			entity_colliders[entity][WEST_WALL].set_disabled(true);
-			reparent_entity(entity, tilemaps[current_z]); #tweak this.
+			reparent_entity(entity, tilemaps[current_z]); ######TWEAK THIS#####
 			break;
 	
 """
