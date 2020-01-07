@@ -30,7 +30,7 @@ func _ready():
 	world_control.call_deferred("init_z_tracker", world);
 	
 func _process(delta):
-	world_control.print_moon_pos();
+	world_control.redraw_entities();
 	
 func setup_base_signals():
 	var _connect;

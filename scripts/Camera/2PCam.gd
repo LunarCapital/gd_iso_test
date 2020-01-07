@@ -20,7 +20,7 @@ onready var cam_goal : Vector2 = Vector2(0, 0);
 func _process(_delta):
 	var cam_peek_modifier = Vector2(PEEK_LIMIT, PEEK_LIMIT);
 	var cam_peek_direction = get_peek_direction();
-	cam_goal = (PlayerStats.sun_pos + PlayerStats.moon_pos)/2;
+	cam_goal = (PlayerStats.sun_cam_pos + PlayerStats.moon_cam_pos)/2;
 	cam_goal += cam_peek_modifier * cam_peek_direction;
 
 	if (self.position != cam_goal): #move towards cam goal.

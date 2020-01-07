@@ -71,8 +71,6 @@ gdscript/warnings/unused_signal=false
 window/size/width=1920
 window/size/height=1080
 window/size/resizable=false
-window/size/borderless=true
-window/size/fullscreen=true
 window/vsync/use_vsync=false
 window/stretch/mode="viewport"
 window/stretch/aspect="keep"
@@ -145,12 +143,12 @@ act_mouse={
 
 [layer_names]
 
-2d_physics/layer_1="walls"
+2d_physics/layer_1="edges"
 2d_physics/layer_2="area2ds"
 2d_physics/layer_3="players"
 2d_physics/layer_4="enemies"
 2d_physics/layer_5="player_instance"
-2d_physics/layer_6="tilemaps"
+2d_physics/layer_6="lower_walls"
 2d_physics/layer_7="personal_walls"
 
 [rendering]

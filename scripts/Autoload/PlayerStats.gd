@@ -11,8 +11,10 @@ const LISTENER_UPDATE_PLAYER_POS = "_update_player_pos";
 const LISTENER_UPDATE_PLAYER_HP = "_update_player_hp";
 
 #vars
-onready var sun_pos : Vector2 = Vector2(0, 0);
-onready var moon_pos : Vector2 = Vector2(0, 0);
+onready var sun_pos : Vector2 = Vector2(0, 0); #'real' position, not accounting for Z axis, for checking if 
+onready var moon_pos : Vector2 = Vector2(0, 0); #players are too far
+onready var sun_cam_pos : Vector2 = Vector2(0, 0); #'cam' position, so the camera is smooth even when
+onready var moon_cam_pos : Vector2 = Vector2(0, 0); #players are falling ('real' pos teleports which is jumpy)
 onready var sun_role : int = Globals.BACKLINE;
 onready var moon_role : int = Globals.FRONTLINE;
 
@@ -22,12 +24,14 @@ onready var sun_hp : int = sun_max_hp;
 onready var moon_max_hp : int = 50; #temp, have some level scaling thing or store in db
 onready var moon_hp : int = moon_max_hp;
 
-func _update_player_pos(emitter_name : String, pos : Vector2, role : int):
+func _update_player_pos(emitter_name : String, pos : Vector2, cam_pos : Vector2, role : int):
 	if (emitter_name == "Sun"): #not sure if i should change "Sun" and "Moon" to constants becaues hardcoding irks me but also seems like a small issue
 		sun_pos = pos;
+		sun_cam_pos = pos + cam_pos;
 		sun_role = role;
 	elif (emitter_name == "Moon"):
 		moon_pos = pos;
+		moon_cam_pos = pos + cam_pos;
 		moon_role = role;
 		
 func _update_player_hp(emitter_name : String, hp : int):

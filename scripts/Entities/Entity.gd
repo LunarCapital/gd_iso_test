@@ -15,16 +15,21 @@ signal _changed_entity_position(entity, pos);
 const SIGNAL_CHANGED_ENTITY_POSITION = "_changed_entity_position";
 signal _changed_entity_velocity(entity, velocity);
 const SIGNAL_CHANGED_ENTITY_VELOCITY = "_changed_entity_velocity";
+signal _fell_below_threshold(entity);
+const SIGNAL_FELL_BELOW_THRESHOLD = "_fell_below_threshold";
+signal _finished_falling(entity);
+const SIGNAL_FINISHED_FALLING = "_finished_falling";
 
 #constants
-const FALL_SPEED = 300 # Pixels/second
+const FALL_SPEED = 1 # Pixels/frame
+onready var sprite = $Sprite;
 
 #globals
 var prev_position : Vector2 = Vector2(0, 0);
 var prev_velocity : Vector2 = Vector2(0, 0);
 var falling : bool = false;
+var falling_threshold : bool = false;
 var falling_checkpoint : float = 0;
-var falling_goal : float = 0;
 
 func _physics_process(delta):
 	var velocity = ((self.position - prev_position)/delta).normalized();
@@ -37,11 +42,16 @@ func _physics_process(delta):
 		prev_position = self.position;
 		
 	if (falling):
-		if (self.position.y < falling_goal):
-			var fall_motion : int = falling_goal - self.position.y;
-			var _motion = move_and_slide(Vector2(0, fall_motion).normalized() * FALL_SPEED);
-			print("checkpoint check: " + str(falling_checkpoint - self.position.y));
+		if (self.sprite.position.y < 0):
+			self.sprite.position.y += FALL_SPEED;
+			if (self.sprite.position.y >= (-Globals.TILE_HEIGHT + 
+					(self.sprite.texture.get_size().y * self.sprite.scale.y * 0.5))
+					and not falling_threshold):
+				falling_threshold = true;
+				emit_signal(SIGNAL_FELL_BELOW_THRESHOLD, self);
+				print(-Globals.TILE_HEIGHT + (self.sprite.texture.get_size().y * self.sprite.scale.y * 0.5));
 		else:
-			print("stopped falling");
 			#UPDATE LAYER
 			falling = false;
+			self.sprite.position.y = 0;
+			emit_signal(SIGNAL_FINISHED_FALLING, self);

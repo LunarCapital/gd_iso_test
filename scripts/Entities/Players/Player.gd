@@ -63,7 +63,7 @@ func _physics_process(delta):
 		close_distance_velocity = move_and_slide(_motion);
 		
 		
-	emit_signal(SIGNAL_CHANGED_PLAYER_POSITION, self.name, self.position, self.player_role);
+	emit_signal(SIGNAL_CHANGED_PLAYER_POSITION, self.name, self.position, self.sprite.position, self.player_role);
 	cycle_cooldowns(delta);
 
 func get_front_walk_motion():

@@ -13,6 +13,8 @@ const LISTENER_ON_AREA_ENTERED = "_on_area_entered";
 const LISTENER_ON_AREA_EXITED = "_on_area_exited";
 const LISTENER_ON_CHANGED_ENTITY_POSITION = "_on_changed_entity_position";
 const LISTENER_ON_CHANGED_ENTITY_VELOCITY = "_on_changed_entity_velocity";
+const LISTENER_ON_FELL_BELOW_THRESHOLD = "_on_fell_below_threshold";
+const LISTENER_ON_FINISHED_FALLING = "_on_finished_falling";
 
 #module loading
 var damage_control = preload("res://scripts/Controllers/Damage.gd").new();
@@ -38,17 +40,23 @@ const EAST_WALL = "East";
 const SOUTH_WALL = "South";
 const WEST_WALL = "West";
 
+#for entities to redraw dict
+const REDRAW = "Redraw"; #bool
+const CURRENT_PIXEL = "Current_Pixel"; #Vector2
+
+#edge directions for sprite border box
+const DIRECTION = "Direction";
+const POINT = "Point"; #intersection point
+enum dir {NONE = -1, LEFT = 0, BOT = 1, RIGHT = 2, TOP = 3, EXTEND = 4};
+
 #globals
 var entity_z_tracker : Dictionary = {};
 var entity_tile_tracker : Dictionary = {};
 var entity_colliders : Dictionary = {};
 var tilemaps : Dictionary = {};
 var colliders : Dictionary = {};
-
-#DEBUG
-var moon;
-var layer_floor;
-var prev_iso_pos;
+var entities_to_redraw : Dictionary = {};
+var sprites_to_delete : Array = [];
 
 """
 Initialises the Z tracker dictionary, which contains:
@@ -70,31 +78,116 @@ func init_z_tracker(world : Node2D):
 					init_entity_dict(tilemap_child, index, world);
 					
 			tilemaps[index] = world_child;
-			colliders[index] = world_child.find_node(Globals.STATIC_BODY_WALLS_NAME, false, false);
+			colliders[index] = world_child.find_node(Globals.STATIC_BODY_LOWER_WALLS_NAME, false, false);
 			
 	for key in entity_z_tracker:
 		manage_colliders(key);
 		manage_personal_colliders(key);
 		key.connect(key.SIGNAL_CHANGED_ENTITY_POSITION, self, self.LISTENER_ON_CHANGED_ENTITY_POSITION);
 		key.connect(key.SIGNAL_CHANGED_ENTITY_VELOCITY, self, self.LISTENER_ON_CHANGED_ENTITY_VELOCITY);
+		key.connect(key.SIGNAL_FELL_BELOW_THRESHOLD, self, self.LISTENER_ON_FELL_BELOW_THRESHOLD);
+		key.connect(key.SIGNAL_FINISHED_FALLING, self, self.LISTENER_ON_FINISHED_FALLING);
 		_on_changed_entity_position(key, key.position);
 
-	#DEBUG
-	moon = world.find_node("Moon");
-	layer_floor = world.find_node("Layer0");
+"""
+Called every physics process by parent, Main. 
+Checks what entities need to be 'redrawn', then does that.
+Entities need to be redrawn if they are BETWEEN TWO TILES OF DIFFERENT HEIGHTS.
+Redrawing duplicates the top portion of the entity's sprite so it doesn't 
+appear behind tiles when it should be in front.
+"""
+func redraw_entities():
+	while (sprites_to_delete.size() > 0):
+		var sprite = sprites_to_delete.pop_front();
+		sprite.free();
+	
+	for entity in entities_to_redraw.keys():
 
-#DEBUG
-func print_moon_pos():
-	var moon_pos = layer_floor.world_to_map(moon.position);
-	if (moon_pos != prev_iso_pos):
-		prev_iso_pos = moon_pos;
-#		print("Moon moved to: (" + str(entity_tile_tracker[moon][CURRENT_TILE]) + ")");
-#		print("North: " + str(entity_tile_tracker[moon][NORTH_TILE]));
-#		print("East: " + str(entity_tile_tracker[moon][EAST_TILE]));
-#		print("South: " + str(entity_tile_tracker[moon][SOUTH_TILE]));
-#		print("West: " + str(entity_tile_tracker[moon][WEST_TILE]));
-#		print("cartesian coords: " + str(layer_floor.map_to_world(moon_pos)));
+		if (	not entities_to_redraw[entity][REDRAW] 
+				or entity.position == entities_to_redraw[entity][CURRENT_PIXEL]):
+			continue;
+		
+		entities_to_redraw[entity][CURRENT_PIXEL] = entity.position;
 
+		var sprite_centre = entity.position + entity.sprite.position + entity.sprite.offset;
+		var sprite_size = entity.sprite.scale * entity.sprite.texture.get_size();
+		var top = sprite_centre.y - sprite_size.y/2;
+		var left = sprite_centre.x - sprite_size.x/2;
+		var bot = sprite_centre.y + sprite_size.y/2;
+		var right = sprite_centre.x + sprite_size.x/2;
+		var sprite_border : PoolVector2Array = [Vector2(left, top), Vector2(left, bot), 
+				Vector2(right, bot), Vector2(right, top)];
+
+		var z_index = entity_z_tracker[entity][CURRENT_Z];
+
+		#sprite cloning/redrawing section
+		for collision_node in colliders[z_index].get_children():
+			var poly = collision_node.get_polygon();
+			for i in range(poly.size()):
+				var edge_a = poly[i];
+				var edge_b = poly[(i+1)%poly.size()];
+				if (edge_a.x < edge_b.x): #if we're checking a segment at the 'front' (rather than 'back') of wall
+					var intersection1 : Dictionary = {DIRECTION: dir.NONE};
+					var intersection2 : Dictionary = {DIRECTION: dir.NONE};
+					for j in range(sprite_border.size()):
+						var edge_c = sprite_border[j];
+						var edge_d = sprite_border[(j+1)%sprite_border.size()];
+						
+						if (intersection1[DIRECTION] == dir.NONE): #haven't yet found a first intersection
+							intersection1[POINT] = Geometry.segment_intersects_segment_2d(edge_a, edge_b, edge_c, edge_d);
+							intersection1[DIRECTION] = j if intersection1[POINT] else dir.NONE;
+						elif (intersection2[DIRECTION] == dir.NONE): #haven't yet found a second intersection
+							var temp_intersect = Geometry.segment_intersects_segment_2d(edge_a, edge_b, edge_c, edge_d);
+							if (temp_intersect and temp_intersect != intersection1[POINT]):
+								intersection2[POINT] = temp_intersect;
+								intersection2[DIRECTION] = j if intersection2[POINT] else dir.NONE;
+								break;
+						
+					if (intersection1[DIRECTION] != dir.NONE): 
+						var temp_sprite : Sprite = entity.sprite.duplicate();
+						
+						if (intersection2[DIRECTION] == dir.NONE): #make other intersection the point of the line segment inside the sprite box
+							intersection2[DIRECTION] = dir.EXTEND;
+							if (edge_a.x >= left and edge_a.x <= right and edge_a.y >= top and edge_a.y <= bot):
+								intersection2[POINT] = edge_a;
+							else:
+								intersection2[POINT] = edge_b;
+							
+						var img : Image = temp_sprite.texture.get_data();
+						var modifier : float = entity.sprite.scale;
+						
+						var shifted_point1 : Vector2 = (intersection1[POINT] - sprite_centre + sprite_size/2)/modifier;
+						var shifted_point2 : Vector2 = (intersection2[POINT] - sprite_centre + sprite_size/2)/modifier;
+						
+						var left_point : Vector2 = shifted_point1 if (shifted_point1.x < shifted_point2.x) else shifted_point2;
+						var right_point : Vector2 = shifted_point1 if (shifted_point1 != left_point) else shifted_point2;
+						var ratio : float = (right_point.y - left_point.y)/(right_point.x - left_point.x);
+						var img_width = img.get_width();
+						var img_height = img.get_height();
+						#god help me this feels very messy
+						
+						img.lock();
+						for x in range(img_width):
+							for y in range(img_height):
+								if (x < left_point.x):
+									img.set_pixel(x, y, Color(0, 0, 0, 0));
+								elif (y > ratio * (x - left_point.x) + left_point.y):
+									img.set_pixel(x, y, Color(0, 0, 0, 0)); 
+						img.unlock();
+						
+						var itex : ImageTexture = ImageTexture.new();
+						itex.set_storage(itex.STORAGE_RAW);
+						itex.create_from_image(img);
+						temp_sprite.texture = itex;
+						
+						temp_sprite.position = sprite_centre - entity.sprite.offset;
+						tilemaps[z_index + 1].add_child(temp_sprite);
+						sprites_to_delete.append(temp_sprite);
+						
+						#next step is to be selective with what poly collider edge we use.
+						#we should only bother with the poly edge that corresponds to where the entity is.
+					
+				
 """
 Listener function that runs when an entity changes position.
 Updates what tile the entity is on, calculates adjacent tiles, and makes colliders.
@@ -102,11 +195,12 @@ Updates what tile the entity is on, calculates adjacent tiles, and makes collide
 TODO: change to only run fully if the entity has changed what isometric tile it's on, instead of running every single time we make a small movement
 """
 func _on_changed_entity_position(entity : Entity, pos : Vector2):
-	var tilemap = tilemaps[entity_z_tracker[entity][CURRENT_Z]];
-	var current_tile = tilemap.world_to_map(pos) + Vector2(1, 1);
+	var z_index = entity_z_tracker[entity][CURRENT_Z];
+	var tilemap = tilemaps[z_index - 1];
+	var current_tile = tilemap.world_to_map(pos) + Vector2(1, 1);	
 	
-	if (entity_tile_tracker[entity][CURRENT_TILE] != current_tile): #only need to do recalculations if we change our current tile
-		print("changed tile: " + str(current_tile));
+	if (entity_tile_tracker[entity][CURRENT_TILE] != current_tile or not entity_z_tracker[entity][QUEUE].has(z_index - 1)): #only need to do recalculations if we change our current tile OR we're not in the 'tilemap' that we should be in
+		#print("changed tile: " + str(current_tile));
 		entity_tile_tracker[entity][CURRENT_TILE] = current_tile;
 		fill_adjacent_tiles(entity);
 		fill_personal_colliders(entity, current_tile, tilemap);
@@ -114,7 +208,8 @@ func _on_changed_entity_position(entity : Entity, pos : Vector2):
 		#DEBUG STUFF BELOW
 		if (!entity.falling): #NOT FALLING
 			if (tilemap.get_cellv(current_tile) == -1): #AND THERE'S NO TILE WHERE WE'RE STANDING
-				trigger_falling(entity, tilemap, current_tile, pos);
+				if (!entity_z_tracker[entity][QUEUE].has(z_index - 1)): #AND NO PART OF OUR COLLISION AREA IS TOUCHING THE FLOOR
+					trigger_falling(entity, tilemap, current_tile, pos);
 		
 		elif (entity.falling): #remember this! if falling, we can't collide with normal walls.
 			return;		
@@ -127,39 +222,45 @@ MAY NO LONGER NEED AFTER CHANGES. COME BACK TO THIS.
 func _on_changed_entity_velocity(entity : Entity, velocity : Vector2):
 	#print("velocity: " + str(velocity));
 	var dx = velocity.x;
-	var dy = velocity.y;
+
+"""
+Listener function that runs when an entity falls 'below' the special case threshold where the entity's
+sprite is between tiles of different heights. At this point we can reparent the entity because there is 
+no longer a need to compensate for ysorting.
+"""
+func _on_fell_below_threshold(entity : Entity):
+	entities_to_redraw[entity][REDRAW] = false;
+
+"""
+Listener function that runs when an entity finishes falling.
+If they are still on an empty tile, then they continue to fall.
+"""
+func _on_finished_falling(entity : Entity):
+	var tilemap = tilemaps[entity_z_tracker[entity][CURRENT_Z] - 1];
+	var current_tile = entity_tile_tracker[entity][CURRENT_TILE];
 	
-#	if (dy < 0): #NORTH
-#		handle_velocity_collision(entity, NORTH_TILE);
-#	elif (dy > 0): #SOUTH
-#		handle_velocity_collision(entity, SOUTH_TILE);
-#	if (dx > 0): #EAST
-#		handle_velocity_collision(entity, EAST_TILE);
-#	elif (dx < 0): #WEST
-#		handle_velocity_collision(entity, WEST_TILE);
-#	#Note that the above iS EXTREMELY FLAWED code. Just for testing.
+	if (tilemap.get_cellv(current_tile) == -1): #AND THERE'S NO TILE WHERE WE'RE STANDING
+		trigger_falling(entity, tilemap, current_tile, entity.position);
 
 """
 Listener function that runs when a layer's floor area is entered by an entity.
-Adds the layer's z index to a queue that is supposed to come into effect if the entity leaves
-the layer that it was previously on.
-MAY NO LONGER NEED AFTER CHANGES. COME BACK TO THIS.
+Adds the layer's z index to a queue. Used to keep track of whether an entity is standing on the 'edge'
+of a tile.
 """
-func _on_area_entered(floor_area : Area2D, entity_area : Area2D):
-	print(entity_area.get_parent().name + " entered " + floor_area.name);
-	print(floor_area.z_index);
+func _on_area_entered(floor_area : Area2D, entity : Entity):
 	var tilemap_index = floor_area.get_parent().z_index;
-	var entity = entity_area.get_parent();
-
-	var entity_index = entity_z_tracker[entity][CURRENT_Z];
-	if (entity_index != tilemap_index):
-		if (!entity_z_tracker[entity][QUEUE].has(tilemap_index)):
-			entity_z_tracker[entity][QUEUE].push_back(tilemap_index);
-	#call_deferred("reparent_entity", entity, tilemaps[index+1]);
+	if (!entity_z_tracker[entity][QUEUE].has(tilemap_index)):
+		entity_z_tracker[entity][QUEUE].push_back(tilemap_index);
 	
-func _on_area_exited(floor_area : Area2D, entity_area : Area2D):
-	print(entity_area.get_parent().name + " exited " + floor_area.name);
-	#INCOMPLETE, COME BACK TO THIS AFTER LEDGE DROPPING IS IMPLEMENTED
+"""
+Listener function that runs when an entity leaves a layer's floor area.
+Removes the layer's z index to a queue. Used to keep track of whether an entity is standing on the 'edge'
+of a tile.
+"""
+func _on_area_exited(floor_area : Area2D, entity : Entity):
+	var tilemap_index = floor_area.get_parent().z_index;	
+	if (entity_z_tracker[entity][QUEUE].has(tilemap_index)):
+		entity_z_tracker[entity][QUEUE].erase(tilemap_index);
 
 """
 Listener function for player shot signals.  Creates an instance of the player shot in the world.
@@ -179,7 +280,7 @@ func _on_player_shot(shooter : Player, shot_type, goal : Vector2):
 Initialises an entity's dictionary entities so this resource can store relevant info about each entity.
 """
 func init_entity_dict(entity : Entity, z_index : int, world : Node2D):
-	entity_z_tracker[entity] = {CURRENT_Z: z_index - 1, QUEUE: []}
+	entity_z_tracker[entity] = {CURRENT_Z: z_index, QUEUE: []};
 	entity_tile_tracker[entity] = {CURRENT_TILE: Vector2(0, 0), 
 			NORTH_TILE: Vector2(0, 0), EAST_TILE: Vector2(0, 0),
 			SOUTH_TILE: Vector2(0, 0), WEST_TILE: Vector2(0, 0)};
@@ -196,6 +297,8 @@ func init_entity_dict(entity : Entity, z_index : int, world : Node2D):
 	entity_colliders[entity] = {STATIC_BODY: static_body, 
 			NORTH_WALL: north_wall, EAST_WALL: east_wall,
 			SOUTH_WALL: south_wall, WEST_WALL: west_wall};
+			
+	entities_to_redraw[entity] = {REDRAW: false, CURRENT_PIXEL: Vector2(0, 0)};
 		
 """
 Sets exclusion of world colliders to ignore or not ignore certain entities,
@@ -203,7 +306,7 @@ based off where they are on the tilemap.  For example, players on ground level s
 hitting walls that are a level up.
 """
 func manage_colliders(entity : Entity):
-	var exclusion_index = entity_z_tracker[entity][CURRENT_Z];
+	var exclusion_index = entity_z_tracker[entity][CURRENT_Z] - 1;
 	
 	for i in range(colliders.size()):
 		if (colliders[i]):
@@ -211,7 +314,6 @@ func manage_colliders(entity : Entity):
 				colliders[i].remove_collision_exception_with(entity);
 			else:
 				colliders[i].add_collision_exception_with(entity);
-				print("granted exception on layer " + str(i) + " to " + entity.name);
 	
 """
 Iterates through each entity's personal colliders and excludes other entities.
@@ -231,28 +333,27 @@ func reparent_entity(entity : Entity, new_parent : TileMap):
 	var current_parent = entity.get_parent();
 	current_parent.remove_child(entity);
 	new_parent.add_child(entity);
-	entity_z_tracker[CURRENT_Z] = new_parent.z_index;
+	entity_z_tracker[entity][CURRENT_Z] = new_parent.z_index;
+	_on_changed_entity_position(entity, entity.position);
+	manage_colliders(entity);
 	
 """
-Sets an entity to fall to a tile below them.
+Sets an entity to fall to a tile below them. Runs at the 'start' of falling.
+We set the entity to follow the collisions of the tilemap one Z level below, but
+don't actually drop the entity down into the lower tilemap for the sake of sorting purposes.
+This is because the entity will be 'between' tiles for a short while.
 """
 func trigger_falling(entity : Entity, tilemap : TileMap, current_tile : Vector2, pos : Vector2):
-	var coordinates : Vector2 = tilemap.map_to_world(current_tile);
-	var current_z : int = entity_z_tracker[entity][CURRENT_Z];
-	for i in range(current_z - 1, -1, -1): #SEARCH FOR A TILE TO DROP TO.
-		var offset = Vector2(1, 1) * (current_z - i);
-		var lower_current_tile = current_tile + offset;
-		if (tilemaps[i].get_cellv(lower_current_tile) != -1): #found tile
-			entity.falling = true;
-			entity.falling_checkpoint = pos.y;
-			entity.falling_goal = (pos.y + (64 * (current_z - i)));
-			#make exception to personal collisions
-			entity_colliders[entity][NORTH_WALL].set_disabled(true);
-			entity_colliders[entity][EAST_WALL].set_disabled(true);
-			entity_colliders[entity][SOUTH_WALL].set_disabled(true);
-			entity_colliders[entity][WEST_WALL].set_disabled(true);
-			reparent_entity(entity, tilemaps[current_z]); ######TWEAK THIS#####
-			break;
+	var current_z : int = entity_z_tracker[entity][CURRENT_Z] - 1;
+	entity.falling_checkpoint = pos.y;
+	entity.position = entity.position + Vector2(0, Globals.TILE_HEIGHT);
+	entity.sprite.position.y = -Globals.TILE_HEIGHT;
+	entity.falling = true;
+	entity.falling_threshold = false;
+	reparent_entity(entity, tilemaps[current_z]);
+	entities_to_redraw[entity][REDRAW] = true;
+	entities_to_redraw[entity][CURRENT_PIXEL] = Vector2(0, 0); #reset current pixel
+	
 	
 """
 Attempts to find the four adjacent tiles of where a specific entity is, then writes these into
@@ -265,7 +366,7 @@ fills in the entity_z_tracker with the entity's CURRENT_TILE.
 func fill_adjacent_tiles(entity : Entity):
 	#INCLUDE LAYER ABOVE LATER WHEN JUMPING IS IMPLEMENTED
 	
-	var current_layer = entity_z_tracker[entity][CURRENT_Z];
+	var current_layer = entity_z_tracker[entity][CURRENT_Z] - 1;
 	
 	#reset tiles to current tile. we use these as a conditional check to see if we've found the adj tile already.
 	var current_tile = entity_tile_tracker[entity][CURRENT_TILE];
@@ -329,20 +430,17 @@ Sets a personal collider to enabled or disabled based on whether its entity has
 an adjacent tile in that direction or not
 """
 func set_personal_collider(entity : Entity, tile_direction : String, wall_direction : String, current_tile : Vector2):
-	if (entity.falling):
-		entity_colliders[entity][wall_direction].set_disabled(true);
+	if (entity_tile_tracker[entity][tile_direction] == current_tile):
+		entity_colliders[entity][wall_direction].set_disabled(false);
 	else:
-		if (entity_tile_tracker[entity][tile_direction] == current_tile):
-			entity_colliders[entity][wall_direction].set_disabled(false);
-		else:
-			entity_colliders[entity][wall_direction].set_disabled(true);
+		entity_colliders[entity][wall_direction].set_disabled(true);
 
 """
 Checks if the velocity an entity is going in has an adjacent tile in that direction.
 If it does, excludes the entity from colliding with any edges in the way.
 """
 func handle_velocity_collision(entity : Entity, direction : String):
-	var z_index = entity_z_tracker[entity][CURRENT_Z];
+	var z_index = entity_z_tracker[entity][CURRENT_Z] - 1;
 	if (entity_tile_tracker[entity][direction] != entity_tile_tracker[entity][CURRENT_TILE]): #ADJ TILE EXISTS
 		colliders[z_index].add_collision_exception_with(entity);
 	else: #NO ADJ TILE

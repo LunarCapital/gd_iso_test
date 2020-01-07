@@ -41,9 +41,15 @@ func create_tilemap_area2d():
 			area2d.name = ("Area" + str(n));
 			tilemap.add_child(area2d);
 			
-			var staticbody2d = StaticBody2D.new();
-			staticbody2d.name = Globals.STATIC_BODY_WALLS_NAME;
-			tilemap.add_child(staticbody2d);
+			var staticbody2d_edges = StaticBody2D.new();
+			staticbody2d_edges.name = Globals.STATIC_BODY_EDGES_NAME;
+			staticbody2d_edges.set_collision_mask(16);
+			tilemap.add_child(staticbody2d_edges);
+			
+			var staticbody2d_lowwalls = StaticBody2D.new();
+			staticbody2d_lowwalls.name = Globals.STATIC_BODY_LOWER_WALLS_NAME;
+			staticbody2d_lowwalls.set_collision_mask(28);
+			tilemap.add_child(staticbody2d_lowwalls);
 
 			var adj_matrix : Array = init_adj_matrix(tilemap.get_used_cells().size());
 			var polygons = fill_polygons(tilemap, adj_matrix);
@@ -64,20 +70,19 @@ func create_tilemap_area2d():
 				var cp2d_walls = construct_collision_poly(smoothed_edges[i]); #walls (edges of floor)
 				cp2d_walls.build_mode = CollisionPolygon2D.BUILD_SEGMENTS;
 				area2d.add_child(cp2d_area);
-				staticbody2d.add_child(cp2d_walls);
-				staticbody2d.set_collision_mask(16);
+				staticbody2d_edges.add_child(cp2d_walls);
 				
 				if (n > 0): #If we're NOT on the floor layer
 					var cp2d_lower_walls = cp2d_walls.duplicate();
 					var lower_walls_poly = cp2d_walls.get_polygon();
 					for j in range(lower_walls_poly.size()):
-						lower_walls_poly[j] += Vector2(0, 64);
+						lower_walls_poly[j] += Vector2(0, Globals.TILE_HEIGHT);
 					cp2d_lower_walls.set_polygon(lower_walls_poly);
-					tilemaps[n-1].find_node(Globals.STATIC_BODY_WALLS_NAME, false, false).add_child(cp2d_lower_walls);
-				
+					tilemaps[n-1].find_node(Globals.STATIC_BODY_LOWER_WALLS_NAME, false, false).add_child(cp2d_lower_walls);
+					
 			area2d.set_script(walkable_area_script);
-			area2d.connect("area_entered", area2d, area2d.LISTENER_ON_AREA_ENTERED);
-			area2d.connect("area_exited", area2d, area2d.LISTENER_ON_AREA_EXITED);
+			area2d.connect("body_entered", area2d, area2d.LISTENER_ON_BODY_ENTERED);
+			area2d.connect("body_exited", area2d, area2d.LISTENER_ON_BODY_EXITED);
 			area2d.collision_layer = (2);
 			area2d.collision_mask = (12);
 
@@ -94,7 +99,7 @@ Used to obtain a tile's vertexes in a scene's space using its origin and tileset
 func shift_vertices(tile_vertices : Array, origin : Vector2):
 	var vertices = [];
 	for vertex in tile_vertices:
-		vertices.append(origin + vertex + Vector2(0, -64));
+		vertices.append(origin + vertex + Vector2(0, -Globals.TILE_HEIGHT));
 	return vertices;
 
 """
@@ -117,7 +122,7 @@ func fill_polygons(tilemap : TileMap, adj_matrix : Array):
 	var cells = tilemap.get_used_cells();
 	for cell in cells:
 		var top_point = tilemap.map_to_world(cell);
-		var origin = top_point - Vector2(tilemap.get_cell_size().x/2 , 0);
+		var origin = top_point - Vector2(Globals.TILE_WIDTH/2 , 0);
 		var cell_id = tilemap.get_cell(cell.x, cell.y);
 		var navpoly = tileset.tile_get_navigation_polygon(cell_id);
 

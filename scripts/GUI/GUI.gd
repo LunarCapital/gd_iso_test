@@ -39,8 +39,9 @@ func _ready():
 	update_hp_values()	
 	
 func _update_cam_pos(pos : Vector2, cam_zoom : Vector2):
-	self.rect_position = pos - (self.rect_size/2)*cam_zoom.x;
-	self.rect_scale = cam_zoom;
+	#self.rect_position = pos - (self.rect_size/2)*cam_zoom.x;
+	#self.rect_scale = cam_zoom;
+	pass;
 	
 func _process(_delta):
 	update_hp_values()
