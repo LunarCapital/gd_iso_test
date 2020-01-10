@@ -28,7 +28,7 @@ const QUEUE = "Queue"; #Array
 #####TILE TRACKER
 const CURRENT_TILE = "Current_Tile"; #Vector2
 	  ########## For these, if there is no adjacent tile, it should be the same as CURRENT_TILE.
-const NORTH_TILE = "North_Tile"; #Vector2
+const NORTH_TILE = "North_Tile"; #Vector2. north is top right btw
 const EAST_TILE = "East_Tile"; #Vector2
 const SOUTH_TILE = "South_Tile"; #Vector2
 const WEST_TILE = "West_Tile"; #Vector2
@@ -49,13 +49,13 @@ const DIRECTION = "Direction";
 const POINT = "Point"; #intersection point
 enum dir {NONE = -1, LEFT = 0, BOT = 1, RIGHT = 2, TOP = 3, EXTEND = 4};
 
-#globals
+#globals (probably move these around to match the constants so these are better documented)
 var entity_z_tracker : Dictionary = {};
 var entity_tile_tracker : Dictionary = {};
 var entity_colliders : Dictionary = {};
 var tilemaps : Dictionary = {};
 var colliders : Dictionary = {};
-var entities_to_redraw : Dictionary = {};
+var entity_redraw_tracker : Dictionary = {};
 var sprites_to_delete : Array = [];
 
 """
@@ -101,14 +101,11 @@ func redraw_entities():
 		var sprite = sprites_to_delete.pop_front();
 		sprite.free();
 	
-	for entity in entities_to_redraw.keys():
+	for entity in entity_redraw_tracker.keys():
 
-		if (	not entities_to_redraw[entity][REDRAW] 
-				or entity.position == entities_to_redraw[entity][CURRENT_PIXEL]):
+		if (not entity_redraw_tracker[entity][REDRAW]):
 			continue;
 		
-		entities_to_redraw[entity][CURRENT_PIXEL] = entity.position;
-
 		var sprite_centre = entity.position + entity.sprite.position + entity.sprite.offset;
 		var sprite_size = entity.sprite.scale * entity.sprite.texture.get_size();
 		var top = sprite_centre.y - sprite_size.y/2;
@@ -179,6 +176,7 @@ func redraw_entities():
 						itex.set_storage(itex.STORAGE_RAW);
 						itex.create_from_image(img);
 						temp_sprite.texture = itex;
+						temp_sprite.light_mask = 2;
 						
 						temp_sprite.position = sprite_centre - entity.sprite.offset;
 						tilemaps[z_index + 1].add_child(temp_sprite);
@@ -205,15 +203,14 @@ func _on_changed_entity_position(entity : Entity, pos : Vector2):
 		fill_adjacent_tiles(entity);
 		fill_personal_colliders(entity, current_tile, tilemap);
 	
-		#DEBUG STUFF BELOW
 		if (!entity.falling): #NOT FALLING
 			if (tilemap.get_cellv(current_tile) == -1): #AND THERE'S NO TILE WHERE WE'RE STANDING
 				if (!entity_z_tracker[entity][QUEUE].has(z_index - 1)): #AND NO PART OF OUR COLLISION AREA IS TOUCHING THE FLOOR
 					trigger_falling(entity, tilemap, current_tile, pos);
 		
 		elif (entity.falling): #remember this! if falling, we can't collide with normal walls.
+		#didn't i solve this problem already in a different way?
 			return;		
-		#DEBUG STUFF ABOVE
 	
 """
 Listener function that runs when an entity changes velocity.
@@ -229,7 +226,7 @@ sprite is between tiles of different heights. At this point we can reparent the 
 no longer a need to compensate for ysorting.
 """
 func _on_fell_below_threshold(entity : Entity):
-	entities_to_redraw[entity][REDRAW] = false;
+	entity_redraw_tracker[entity][REDRAW] = false;
 
 """
 Listener function that runs when an entity finishes falling.
@@ -281,9 +278,9 @@ Initialises an entity's dictionary entities so this resource can store relevant 
 """
 func init_entity_dict(entity : Entity, z_index : int, world : Node2D):
 	entity_z_tracker[entity] = {CURRENT_Z: z_index, QUEUE: []};
-	entity_tile_tracker[entity] = {CURRENT_TILE: Vector2(0, 0), 
-			NORTH_TILE: Vector2(0, 0), EAST_TILE: Vector2(0, 0),
-			SOUTH_TILE: Vector2(0, 0), WEST_TILE: Vector2(0, 0)};
+	entity_tile_tracker[entity] = 	{CURRENT_TILE: Vector2(0, 0), 
+									 NORTH_TILE: Vector2(0, 0), EAST_TILE: Vector2(0, 0),
+									 SOUTH_TILE: Vector2(0, 0), WEST_TILE: Vector2(0, 0)};
 			
 	var static_body = StaticBody2D.new(); world.add_child(static_body);
 	var north_wall = CollisionPolygon2D.new(); static_body.add_child(north_wall);
@@ -298,7 +295,8 @@ func init_entity_dict(entity : Entity, z_index : int, world : Node2D):
 			NORTH_WALL: north_wall, EAST_WALL: east_wall,
 			SOUTH_WALL: south_wall, WEST_WALL: west_wall};
 			
-	entities_to_redraw[entity] = {REDRAW: false, CURRENT_PIXEL: Vector2(0, 0)};
+	entity_redraw_tracker[entity] = 	{REDRAW: false, CURRENT_PIXEL: Vector2(0, 0)
+										 };
 		
 """
 Sets exclusion of world colliders to ignore or not ignore certain entities,
@@ -339,9 +337,9 @@ func reparent_entity(entity : Entity, new_parent : TileMap):
 	
 """
 Sets an entity to fall to a tile below them. Runs at the 'start' of falling.
-We set the entity to follow the collisions of the tilemap one Z level below, but
-don't actually drop the entity down into the lower tilemap for the sake of sorting purposes.
-This is because the entity will be 'between' tiles for a short while.
+Because the entity will be 'between' tiles for a short while, we set the REDRAW tag to true
+so that the top of the entity is does not appear to be drawn behind the 'higher' of the 
+two tiles it is between.
 """
 func trigger_falling(entity : Entity, tilemap : TileMap, current_tile : Vector2, pos : Vector2):
 	var current_z : int = entity_z_tracker[entity][CURRENT_Z] - 1;
@@ -351,9 +349,8 @@ func trigger_falling(entity : Entity, tilemap : TileMap, current_tile : Vector2,
 	entity.falling = true;
 	entity.falling_threshold = false;
 	reparent_entity(entity, tilemaps[current_z]);
-	entities_to_redraw[entity][REDRAW] = true;
-	entities_to_redraw[entity][CURRENT_PIXEL] = Vector2(0, 0); #reset current pixel
-	
+	entity_redraw_tracker[entity][REDRAW] = true;
+	#ADD THE MASKS HERE
 	
 """
 Attempts to find the four adjacent tiles of where a specific entity is, then writes these into
