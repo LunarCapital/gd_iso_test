@@ -8,9 +8,9 @@ For example, damage calculations for when the bullet instance emits a signal ale
 """
 
 #module loading
-onready var world_control = preload("res://scripts/Controllers/World.gd").new();
-onready var world : Node2D = self.find_node("World"); #eventually replace with a tracker on the level we have loaded (or maybe leave that for the world resource)
-	
+onready var world_control = $Controllers/WorldController
+onready var world_tiler = $Controllers/TileController
+onready var world_node = find_node("World");
 
 #resource loading
 onready var sun = find_node("Sun");
@@ -24,13 +24,13 @@ func _ready():
 		
 	sun.player_role = Globals.BACKLINE;
 	moon.player_role = Globals.FRONTLINE;
+
+	world_tiler.init(world_node.get_children());
+	world_tiler.setup_world_tiles();
+	world_control.call_deferred("init_z_tracker", world_node);
 	
 	setup_base_signals();
 	setup_level_signals();
-	world_control.call_deferred("init_z_tracker", world);
-	
-func _process(delta):
-	world_control.redraw_entities();
 	
 func setup_base_signals():
 	var _connect;
@@ -52,7 +52,7 @@ Sets up signals for the level's Area2D floors and wall colliders if needed.
 """
 func setup_level_signals():
 	var area2ds : Array = [];
-	for tilemap in world.get_children():
+	for tilemap in world_node.get_children():
 		if tilemap is TileMap:
 			for child in tilemap.get_children():
 				if child is Area2D:

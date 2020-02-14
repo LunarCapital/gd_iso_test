@@ -1,0 +1,92 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=2]
+
+[sub_resource type="Shader" id=1]
+code = "shader_type canvas_item;
+
+/***
+ * A shader that is used for the situation where an entity is falling between two tiles.
+ * Normally when this happens, due to everything being sorted in order of z-index, the top portion of the entity's sprites
+ * is drawn BEHIND the upper tile.
+ *
+ * In order to fix this, we duplicate the sprite, draw it in FRONT of the upper tile, then hide the bottom half (AKA we hide the parts of the 
+ * sprite we can see on the entity).  
+ *
+ * This occurs by using 'mask lines', where if pixels of the sprite are below some predetermined lines for each of the adjacent
+ * north, east, south, and west tiles, then those pixels are hidden.  
+ */
+
+//mask lines a to b. the names look horrible but i did them so i can put the param setting in one nice func
+uniform vec2 line_N_a;
+uniform vec2 line_N_b;
+uniform vec2 line_E_a;
+uniform vec2 line_E_b;
+uniform vec2 line_S_a;
+uniform vec2 line_S_b;
+uniform vec2 line_W_a;
+uniform vec2 line_W_b;
+
+//sprite globals
+uniform vec2 sprite_pos;
+uniform vec2 sprite_scale;
+
+//whether we even need the mask
+uniform bool is_adj_N;
+uniform bool is_adj_E;
+uniform bool is_adj_S;
+uniform bool is_adj_W;
+
+vec4 hide_pixel_if_needed(vec4 colour, vec2 uv, vec2 sprite_texture_size, vec2 line_a, vec2 line_b, float alpha_value) {
+	vec2 origin = sprite_pos - (sprite_texture_size/float(2)); //in pixels
+	vec2 uv_pixels = (uv * sprite_texture_size) + origin; //UV in pixels
+				
+	float gradient = (line_b.y - line_a.y)/(line_b.x - line_a.x); //gradient and intercept of mask line
+	float intercept = line_a.y - gradient*line_a.x; //intercept at x = 0
+		
+	float mask_line_at_pixel_x = gradient * uv_pixels.x + intercept; //y value of mask line at current pixel x
+		
+	if (mask_line_at_pixel_x <= uv_pixels.y) { //mask line is above pixel. we hide the pixel.
+		colour.a = alpha_value;
+	} else {
+		colour.a = float(1);
+	}
+	
+	return colour;
+}
+
+void fragment() {
+	vec4 colour = texture(TEXTURE, UV);
+	vec2 sprite_texture_size = vec2(textureSize(TEXTURE, 0))*sprite_scale;
+
+	if (colour.a != float(0)) {
+		colour = hide_pixel_if_needed(colour, UV, sprite_texture_size, line_W_a, line_W_b, 0.5);
+		colour = hide_pixel_if_needed(colour, UV, sprite_texture_size, line_N_a, line_N_b, 0.5);
+		colour = hide_pixel_if_needed(colour, UV, sprite_texture_size, line_E_a, line_E_b, 0);
+	
+
+		if (colour.a != float(0)) {
+			colour = hide_pixel_if_needed(colour, UV, sprite_texture_size, line_S_a, line_S_b, 0);	
+		}
+
+		if (colour.a == float(0.5)) {
+			colour.a = float(0);
+		}
+	}
+	COLOR = colour;
+}"
+
+[resource]
+shader = SubResource( 1 )
+shader_param/line_N_a = null
+shader_param/line_N_b = null
+shader_param/line_E_a = null
+shader_param/line_E_b = null
+shader_param/line_S_a = null
+shader_param/line_S_b = null
+shader_param/line_W_a = null
+shader_param/line_W_b = null
+shader_param/sprite_pos = null
+shader_param/sprite_scale = null
+shader_param/is_adj_N = null
+shader_param/is_adj_E = null
+shader_param/is_adj_S = null
+shader_param/is_adj_W = null

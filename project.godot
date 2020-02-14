@@ -17,7 +17,7 @@ _global_script_classes=[ {
 "base": "Reference",
 "class": "Edge",
 "language": "GDScript",
-"path": "res://scripts/World/WorldUtilities/Edge.gd"
+"path": "res://scripts/Controllers/TileControllerUtilities/Edge.gd"
 }, {
 "base": "Entity",
 "class": "Enemy",
@@ -37,7 +37,7 @@ _global_script_classes=[ {
 "base": "Reference",
 "class": "Polygon",
 "language": "GDScript",
-"path": "res://scripts/World/WorldUtilities/Polygon.gd"
+"path": "res://scripts/Controllers/TileControllerUtilities/Polygon.gd"
 } ]
 _global_script_class_icons={
 "Bullet": "",
@@ -59,12 +59,13 @@ config/icon="res://icon.png"
 Globals="*res://scripts/Autoload/Globals.gd"
 Group="*res://scripts/Autoload/Group.gd"
 PlayerStats="*res://scripts/Autoload/PlayerStats.gd"
+Functions="*res://scripts/Autoload/Functions.gd"
 
 [debug]
 
 settings/fps/force_fps=120
-gdscript/warnings/unused_class_variable=false
 gdscript/warnings/unused_signal=false
+gdscript/warnings/integer_division=false
 
 [display]
 

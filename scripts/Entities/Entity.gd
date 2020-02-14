@@ -13,8 +13,6 @@ at it anywhere else.
 #signals
 signal _changed_entity_position(entity, pos);
 const SIGNAL_CHANGED_ENTITY_POSITION = "_changed_entity_position";
-signal _changed_entity_velocity(entity, velocity);
-const SIGNAL_CHANGED_ENTITY_VELOCITY = "_changed_entity_velocity";
 signal _fell_below_threshold(entity);
 const SIGNAL_FELL_BELOW_THRESHOLD = "_fell_below_threshold";
 signal _finished_falling(entity);
@@ -32,17 +30,14 @@ var falling_threshold : bool = false;
 var falling_checkpoint : float = 0;
 
 func _physics_process(delta):
-	var velocity = ((self.position - prev_position)/delta).normalized();
-	if (prev_velocity != velocity):
-		emit_signal(SIGNAL_CHANGED_ENTITY_VELOCITY, self, velocity);
-		prev_velocity = velocity;
-	
 	if (prev_position != self.position):
 		emit_signal(SIGNAL_CHANGED_ENTITY_POSITION, self, self.position);
 		prev_position = self.position;
 		
 	if (falling):
 		if (self.sprite.position.y < 0):
+			if (Input.is_action_pressed("move_jump")):
+				return;
 			self.sprite.position.y += FALL_SPEED;
 			if (self.sprite.position.y >= (-Globals.TILE_HEIGHT + 
 					(self.sprite.texture.get_size().y * self.sprite.scale.y * 0.5))

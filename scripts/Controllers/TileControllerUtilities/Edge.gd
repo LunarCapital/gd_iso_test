@@ -7,13 +7,19 @@ Consists of two points, A and B, which describe its line.
 It exists solely for another world-related script that constructs Area2Ds based off walkable 'floor' for tilemaps.
 Due to this, it also has two booleans, which describe whether the edge has been checked off being added to the Area2D's
 CollisionPolygon2D, and whether the edge is an intersection (as opposed to being part of the perimeter). 
+
+Its last variable, tile, describes the coordinates of the edge's corresponding tile in ISOMETRIC space, 
+unless the edge is a merged edge, in which case the tile variable will be set to Vector2(INF, INF);
 """
 
+const side = {MERGED = -1, NORTH = 0, EAST = 1, SOUTH = 2, WEST = 3}; #as always north is top-right direction
 
 var a : Vector2;
 var b : Vector2;
 var checked : bool = false;
 var intersection : bool = false; 
+var tile : Vector2;
+var tile_side : int;
 
 """
 Returns the reverse of an edge.
@@ -25,6 +31,8 @@ func get_reverse_edge():
 	reversed_edge.b = self.a;
 	reversed_edge.checked = self.checked;
 	reversed_edge.intersection = self.intersection;
+	reversed_edge.tile = self.tile;
+	reversed_edge.tile_side = self.tile_side;
 	return reversed_edge;
 
 """
@@ -38,6 +46,8 @@ func get_extended_edge(edge):
 	extended_edge.b = self.b;
 	extended_edge.checked = self.checked;
 	extended_edge.intersection = self.intersection;
+	extended_edge.tile = Vector2(INF, INF);
+	extended_edge.tile_side = side.MERGED;
 	
 	var middle : Vector2;
 	

@@ -54,13 +54,13 @@ func correct_distance_apart():
 	var distance_apart = (sun_pos - moon_pos).length();
 	var max_distance = get_viewport().get_visible_rect().size.length()/2;
 	if (distance_apart > max_distance):
-		var move_toward : Vector2 = Vector2(0, 0);
+		var move_toward_partner : Vector2 = Vector2(0, 0);
 		if (sun_role == Globals.BACKLINE):
-			move_toward = sun_pos - moon_pos;
-			move_toward = move_toward.normalized() * max_distance + moon_pos;
+			move_toward_partner = sun_pos - moon_pos;
+			move_toward_partner = move_toward_partner.normalized() * max_distance + moon_pos;
 		elif (moon_role == Globals.BACKLINE):
-			move_toward = moon_pos - sun_pos;
-			move_toward = move_toward.normalized() * max_distance + sun_pos;
-		emit_signal(SIGNAL_PLAYERS_MOVED_TOO_FAR, move_toward);
+			move_toward_partner = moon_pos - sun_pos;
+			move_toward_partner = move_toward_partner.normalized() * max_distance + sun_pos;
+		emit_signal(SIGNAL_PLAYERS_MOVED_TOO_FAR, move_toward_partner);
 	else:
 		emit_signal(SIGNAL_PLAYERS_MOVED_CLOSER);

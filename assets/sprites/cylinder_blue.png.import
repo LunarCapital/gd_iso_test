@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/template_block_hider.png-7831953c1f49333f492cd32ba0d48acd.stex"
+path="res://.import/cylinder_blue.png-39585d091c79cee7c11802945cd49733.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/light/template_block_hider.png"
-dest_files=[ "res://.import/template_block_hider.png-7831953c1f49333f492cd32ba0d48acd.stex" ]
+source_file="res://assets/sprites/cylinder_blue.png"
+dest_files=[ "res://.import/cylinder_blue.png-39585d091c79cee7c11802945cd49733.stex" ]
 
 [params]
 

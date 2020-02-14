@@ -27,8 +27,8 @@ func _physics_process(_delta):
 		pass;
 
 	if Input.is_action_pressed("move_jump"): #currently a debug key
-		emit_signal(SIGNAL_CHANGED_HEALTH, self.name, PlayerStats.moon_hp - 10);
-		print("falling? : " + str(self.falling));
+		#emit_signal(SIGNAL_CHANGED_HEALTH, self.name, PlayerStats.moon_hp - 10);
+		#print("falling? : " + str(self.falling));
 		pass;
 		
 

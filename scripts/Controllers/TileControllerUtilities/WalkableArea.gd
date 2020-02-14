@@ -12,6 +12,7 @@ const LISTENER_ON_BODY_EXITED = "_on_body_exited";
 
 func _on_body_entered(body : PhysicsBody2D):
 	emit_signal(SIGNAL_ENTITY_ENTERED_AREA, self, body);
+	print("entered " + self.name + ": " + body.name);
 
 func _on_body_exited(body : PhysicsBody2D):
 	emit_signal(SIGNAL_ENTITY_EXITED_AREA, self, body);

@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/template_block_hider_E.png-069d61b3ba23e112c6782feda445f1aa.stex"
+path="res://.import/64_simple_purple.png-115ba0e79a077eb5c4d8c171b38e8b9f.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/light/template_block_hider_E.png"
-dest_files=[ "res://.import/template_block_hider_E.png-069d61b3ba23e112c6782feda445f1aa.stex" ]
+source_file="res://assets/tiles/64_simple_purple.png"
+dest_files=[ "res://.import/64_simple_purple.png-115ba0e79a077eb5c4d8c171b38e8b9f.stex" ]
 
 [params]
 

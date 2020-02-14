@@ -6,7 +6,7 @@ Has a floating HP bar.
 """
 
 #resources
-onready var hp_bar = $ProgressBar;
+onready var hp_bar = $ZNode/ProgressBar
 
 #constants
 export(int) var HEALTH = 10
