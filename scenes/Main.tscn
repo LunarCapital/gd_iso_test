@@ -15,29 +15,29 @@ script = ExtResource( 1 )
 [node name="World" type="Node2D" parent="."]
 
 [node name="Layer0" parent="World" instance=ExtResource( 2 )]
-tile_data = PoolIntArray( -196607, 1, 0, -65538, 1, 0, -65537, 1, 0, -131072, 1, 0, -131071, 1, 0, -3, 1, 0, -2, 1, 0, -1, 1, 0, -65536, 1, 0, -65535, 1, 0, -65534, 1, 0, 65533, 1, 0, 65534, 1, 0, 65535, 1, 0, 0, 1, 0, 1, 1, 0, 2, 1, 0, 131069, 1, 0, 131070, 1, 0, 131071, 1, 0, 65536, 1, 0, 65537, 1, 0, 65538, 1, 0, 196607, 1, 0, 131072, 1, 0, 131073, 1, 0, 131074, 1, 0, 196608, 1, 0, 196609, 1, 0, 196610, 1, 0 )
+tile_data = PoolIntArray( -65535, 1, 0, 131071, 1, 0, 65539, 1, 0, 196608, 1, 0, 196609, 1, 0, 196610, 1, 0, 262144, 1, 0, 262145, 1, 0, 262146, 1, 0 )
 
 [node name="Layer1" parent="World" instance=ExtResource( 2 )]
 z_index = 1
-tile_data = PoolIntArray( -131075, 0, 0, -131074, 5, 0, -65539, 0, 0, -3, 0, 0, 65533, 0, 0 )
-
-[node name="Sun" parent="World/Layer1" instance=ExtResource( 3 )]
 
 [node name="Layer2" parent="World" instance=ExtResource( 2 )]
 z_index = 2
-tile_data = PoolIntArray( -196611, 6, 0, -131076, 2, 0, -65540, 2, 0, -4, 2, 0 )
 
 [node name="Layer3" parent="World" instance=ExtResource( 2 )]
 z_index = 3
 
-[node name="Moon" parent="World/Layer3" instance=ExtResource( 4 )]
-position = Vector2( 29.8108, -128.302 )
-
 [node name="Layer4" parent="World" instance=ExtResource( 2 )]
 z_index = 4
+tile_data = PoolIntArray( -196612, 4, 0, -196611, 4, 0, -196610, 4, 0, -131076, 4, 0, -131075, 4, 0, -131074, 4, 0, -65540, 4, 0, -65539, 4, 0, -65538, 4, 0 )
 
 [node name="Layer5" parent="World" instance=ExtResource( 2 )]
 z_index = 5
+
+[node name="Moon" parent="World/Layer5" instance=ExtResource( 4 )]
+position = Vector2( 16, -120 )
+
+[node name="Sun" parent="World/Layer5" instance=ExtResource( 3 )]
+position = Vector2( 0, -140 )
 
 [node name="Camera2D" type="Camera2D" parent="." groups=[
 "Cameras",

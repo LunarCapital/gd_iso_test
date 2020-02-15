@@ -16,15 +16,11 @@ I only write comments with these bootleg examples because i know i'll forget in 
 and have to check 'why is this array 2d again'
 """
 
-var tilemaps : Array = []; #pass in the tilemaps array from TileController
-var tilemap_to_edges: Dictionary = {}; 
-
 enum {UNCONNECTED = 0, CONNECTED = 1}
 
-func init(tilemaps):
-	self.tilemaps = tilemaps;
-
-func build_edges():
+func build_edges(tilemaps : Array):
+	var tilemap_to_edges: Dictionary = {}; 
+	
 	for n in range(tilemaps.size()):
 		var tilemap = tilemaps[n];
 		if (tilemap):	

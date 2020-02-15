@@ -12,8 +12,6 @@ Its last variable, tile, describes the coordinates of the edge's corresponding t
 unless the edge is a merged edge, in which case the tile variable will be set to Vector2(INF, INF);
 """
 
-const side = {MERGED = -1, NORTH = 0, EAST = 1, SOUTH = 2, WEST = 3}; #as always north is top-right direction
-
 var a : Vector2;
 var b : Vector2;
 var checked : bool = false;
@@ -47,7 +45,7 @@ func get_extended_edge(edge):
 	extended_edge.checked = self.checked;
 	extended_edge.intersection = self.intersection;
 	extended_edge.tile = Vector2(INF, INF);
-	extended_edge.tile_side = side.MERGED;
+	extended_edge.tile_side = Globals.side.MERGED;
 	
 	var middle : Vector2;
 	
@@ -63,6 +61,16 @@ func get_extended_edge(edge):
 		return extended_edge;
 	else: #impossible to extend, edges do not share a point.
 		return self;
+
+func duplicate():
+	var duplicate_edge = get_script().new();
+	duplicate_edge.a = self.a;
+	duplicate_edge.b = self.b;
+	duplicate_edge.checked = self.checked;
+	duplicate_edge.intersection = self.intersection;
+	duplicate_edge.tile = self.tile;
+	duplicate_edge.tile_side = self.tile_side;
+	return duplicate_edge;
 
 """
 Checks if two edges are identical.

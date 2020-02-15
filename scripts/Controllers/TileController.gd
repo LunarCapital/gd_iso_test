@@ -20,6 +20,8 @@ const walkable_area_script = preload("res://scripts/Controllers/TileControllerUt
 #utility nodes
 onready var edges_array_builder = $EdgesArrayBuilder;
 onready var edge_smoother = $EdgeSmoother
+onready var ledges_array_builder = $LedgesArrayBuilder;
+onready var ledge_superimposer = $LedgeSuperimposer;
 
 #globals
 var tilemaps : Array = [];
@@ -31,9 +33,6 @@ const DEFAULT_2D_ARRAY_SIZE : int = 5;
 func init(world_children):
 	tilemaps.resize(world_children.size());
 	fill_tilemaps_array(world_children);
-	
-	#also init our utility nodes
-	edges_array_builder.init(tilemaps);
 
 """
 Iterates through all child nodes of the world and adds tilemaps to the global array.
@@ -46,27 +45,14 @@ func fill_tilemaps_array(world_children : Array):
 		tilemaps[child.z_index] = child; #assumes that all tilemaps have differing z-indexes
 
 func setup_world_tiles():
-	var tilemaps_to_edges : Dictionary = edges_array_builder.build_edges();
+	var tilemaps_to_edges : Dictionary = edges_array_builder.build_edges(tilemaps);
 	var tilemaps_to_smoothed_edges : Dictionary = edge_smoother.build_smoothed_edges(tilemaps_to_edges);
 	
 	create_tilemap_area2d(tilemaps_to_smoothed_edges);
 	create_tilemap_walls(tilemaps_to_smoothed_edges);
-	var tilemaps_to_ledges : Dictionary = create_tilemap_ledges(tilemaps_to_edges);
+	var tilemaps_to_ledges : Dictionary = ledges_array_builder.build_ledges(tilemaps_to_edges, edge_smoother);
+	tilemaps_to_ledges = ledge_superimposer.superimpose_ledges(tilemaps_to_ledges);
 	build_tilemap_ledges(tilemaps_to_ledges);
-	
-	var testbody : StaticBody2D = StaticBody2D.new();
-	var testpoly : CollisionPolygon2D = CollisionPolygon2D.new();
-	testpoly.build_mode = testpoly.BUILD_SEGMENTS;
-	var testpool : PoolVector2Array = [];
-	testpool.append(Vector2(0, 0));
-	testpool.append(Vector2(64, 0));
-	testpool.append(Vector2(64, -32));
-	testpool.append(Vector2(64, 0)); 
-	testpoly.set_polygon(testpool);
-	testbody.add_child(testpoly);
-	tilemaps[0].add_child(testbody);
-	testbody.set_collision_mask(28);
-	#ALL DEBUG
 
 """
 Creates an area2D based off a tilemap's walkable tile areas.
@@ -115,68 +101,11 @@ func create_tilemap_walls(tilemaps_to_smoothed_edges : Dictionary):
 					tilemaps[n-1].find_node(Globals.STATIC_BODY_WALLS_NAME, false, false).add_child(cp2d_lower_walls);
 
 """
-Constructs an unholy dictionary that maps tilemaps to ledges, except its a 3D dictionary.
-Indexes are: [tilemap][superimposed tilemap][ledges array].  In this function we do not 
-worry about the superimposed tilemap index yet.
-
-The ledges array itself is also 3D with the following indexes:
-[edge group][ledge group][edge].
-Recall that edge groups denote that groups of polygons within the same tilemap can be separated.
-Ledge groups in this case denote that groups of LEDGES can be separated too.
-For example, a group of 3x3 tiles with four 1x1 tiles on a lower level adjacent to the four 
-MIDDLE tiles of each of the 3x3's sides would have EIGHT LEDGES, separated into four groups of 
-two ledges each (which would take up the corners). 
-"""
-func create_tilemap_ledges(tilemaps_to_edges : Dictionary) -> Dictionary:
-	var tilemaps_to_ledges : Dictionary = {};
-	
-	for n in range(tilemaps.size()):
-		var tilemap = tilemaps[n];
-		if (tilemap):
-			var edges = tilemaps_to_edges[tilemap];
-
-			var ledges : Array = Functions.init_3d_array(edges.size());
-
-			#FILL 3D ARRAY OF LEDGES
-			for edge_group in edges.size():
-				var ledge_group = 0;
-				for edge_index in edges[edge_group].size():
-					var edge = edges[edge_group][edge_index];
-					if (edge.intersection):
-						continue;
-					
-					var current_tile : Vector2 = edge.tile;
-					var current_layer = tilemap.z_index;
-					var adjacent_tile : Vector2 = current_tile; #will stay equal to current_tile if no adj_tile exists.
-					
-					for i in range(current_layer - 1, -1, -1):
-						var adjacent_coords = get_adjacent_coords(current_tile, current_layer, i, edge.tile_side);
-						var lower_tilemap = tilemaps[i];
-
-						if (adjacent_coords != current_tile and 
-								lower_tilemap.get_cellv(adjacent_coords) != lower_tilemap.INVALID_CELL):
-							adjacent_tile = adjacent_coords;
-							break;
-							
-					if (ledge_group >= ledges[edge_group].size()):
-							ledges[edge_group].append([]);
-					if (adjacent_tile == current_tile): #AKA NO adj tile exists
-						ledges[edge_group][ledge_group].append(edge);
-					else:
-						if (ledges[edge_group][ledge_group].size() > 0): #finish current ledge group and move to next if there is a 'gap'
-							ledge_group += 1;
-
-			tilemaps_to_ledges[tilemap] = {};
-			tilemaps_to_ledges[tilemap][tilemap] = ledges; #storing 3d array in 2d dictionary my brain is so big, thankfully nobody will ever see this
-	
-	return tilemaps_to_ledges;
-
-"""
 Constructs the ledges 3d array (and tilemaps_to_ledges dictionary) into usable collisionpolygon2ds.
 A separate function because there's so many damn ledge groups.
 """
 func build_tilemap_ledges(tilemaps_to_ledges):
-	for n in range(tilemaps.size()):
+	for n in range(tilemaps.size() -1, -1, -1):
 		var tilemap = tilemaps[n];
 		if (tilemap):
 			
@@ -185,26 +114,28 @@ func build_tilemap_ledges(tilemaps_to_ledges):
 			staticbody2d_ledges.set_collision_mask(28);
 			tilemap.add_child(staticbody2d_ledges);
 			
-			var ledges = tilemaps_to_ledges[tilemap][tilemap]; #eventually do for raised tilemaps too
-
-			for i in range(ledges.size()): #edge group
-				var ledge_group_array = ledges[i]; #...we cut it down to a 2d array because in my infinite foresight i made the sort function only work on 2d arrays
-				
-				for j in range(ledge_group_array.size()):
-					for k in range(ledge_group_array[j].size()):
-						ledge_group_array[j][k].checked = false; #uncheck so sorting can happen again
-				
-				ledge_group_array = edge_smoother.sort_edges(ledge_group_array);
-
-				for j in range(ledge_group_array.size()): #ledge group
-					if (ledge_group_array[j].size() > 0):
-						var cp2d_ledges = construct_collision_poly(ledge_group_array[j]);
-												
-						if (ledge_group_array[j][0].a != ledge_group_array[j][ledge_group_array[j].size() - 1].b): #NOT A LOOP
-							cp2d_ledges = make_palindrome(cp2d_ledges); #we do this because godot cannot handle non-loop colliders any other way (that i know of)
+			for m in range(tilemap.z_index, tilemaps.size() -1):
+				var tilemap_m = tilemaps[m]; #wanted to call this superimposed_tilemap but doesn't make sense for when tilemap_m = tilemap
+				var ledges = tilemaps_to_ledges[tilemap][tilemap_m];
+	
+				for i in range(ledges.size()): #edge group
+					var ledge_group_array = ledges[i]; 
+	
+					for j in range(ledge_group_array.size()): #ledge group
+						if (ledge_group_array[j].size() > 0):
+							var cp2d_ledges = construct_collision_poly(ledge_group_array[j]);
+													
+							if (ledge_group_array[j][0].a != ledge_group_array[j][ledge_group_array[j].size() - 1].b): #NOT A LOOP
+								cp2d_ledges = make_palindrome(cp2d_ledges); #we do this because godot cannot handle non-loop colliders any other way (that i know of)
+								
+							cp2d_ledges.build_mode = CollisionPolygon2D.BUILD_SEGMENTS;
 							
-						cp2d_ledges.build_mode = CollisionPolygon2D.BUILD_SEGMENTS;
-						staticbody2d_ledges.add_child(cp2d_ledges);
+							if (tilemap == tilemap_m):
+								staticbody2d_ledges.add_child(cp2d_ledges);
+							else:
+								var staticbody2d_superimposed_ledges = tilemap_m.find_node(Globals.STATIC_BODY_LEDGES_NAME, false, false);
+								if (staticbody2d_superimposed_ledges):
+									staticbody2d_superimposed_ledges.add_child(cp2d_ledges);
 				
 
 ###########################
@@ -240,24 +171,3 @@ func make_palindrome(cp2d : CollisionPolygon2D):
 	cp2d.set_polygon(polygon_vertices);
 	return cp2d;
 	
-"""
-Given some edge's tile and the direction of the edge, attempts to find the coordinates for
-the adjacent tile on a given height.  
-If the tile side is invalid, returns the coords of the current tile.
-"""
-func get_adjacent_coords(current_tile : Vector2, current_layer : int, observed_layer : int, tile_side : int) -> Vector2:
-	var adjacent_coords : Vector2 = current_tile; 
-	var offset : Vector2 = (current_layer - observed_layer) * Vector2.ONE;
-	var layer_centre = current_tile + offset;
-	
-	match tile_side:
-		0: #NORTH (top-right)
-			adjacent_coords = layer_centre + Vector2(0, -1);
-		1: #EAST
-			adjacent_coords = layer_centre + Vector2(1, 0);
-		2: #SOUTH
-			adjacent_coords = layer_centre + Vector2(0, 1);
-		3: #WEST
-			adjacent_coords = layer_centre + Vector2(-1, 0);
-			
-	return adjacent_coords;
