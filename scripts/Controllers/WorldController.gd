@@ -5,6 +5,29 @@ Should handle world-related functions such as:
 	Placing objects or enemies in the world
 	Grouping said objects/enemies
 	Switching out areas/tilesets when the player moves to a different location
+	
+...But we need to redefine what this controller does and split its functionality up into sub-nodes.
+Currently this controller does the following:
+	
+	Track entity z indexes (pos tracking)
+	Track entity tiles (pos tarcking)
+	Track entity masks (falling?)
+	Manage entity shaders for falling (falling)
+	Manage whether a player interacts with colliders based on z index (stay here?)
+	Reparents player to diff tilemaps (stay here?)
+	Has player fall (falling)
+	receive signals for:
+		changing pos (post tracking)
+		finishing falling (falling)
+		falling to the point where the shader kicks in (falling)
+		entering/exiting walkable areas (pos tracking? or falling?)
+		when a player shoots (shooting)
+		
+	Split up into:
+		Pos tracking
+		Falling (includes masking)
+		Shooting?
+	
 """
 
 #listeners
@@ -38,15 +61,6 @@ const EAST_TILE = "East_Tile"; #Vector2
 const SOUTH_TILE = "South_Tile"; #Vector2
 const WEST_TILE = "West_Tile"; #Vector2
 #if there is no tile N/E/S/W tile, we make it equal to CURRENT_TILE.
-#############################################################################################################
-
-#############################################################################################################
-var entity_colliders : Dictionary = {}; #handles the four personal colliders surrounding an entity
-const STATIC_BODY = "Static_Body"; #StaticBody2D. the static body node that contains all four colliders
-const NORTH_WALL = "North_Wall"; #CollisionPolygon2D. as usual, north = top-right.
-const EAST_WALL = "East_Wall"; #CollisionPolygon2D
-const SOUTH_WALL = "South_Wall"; #CollisionPolygon2D
-const WEST_WALL = "West_Wall"; #CollisionPolygon2D
 #############################################################################################################
 
 #############################################################################################################
@@ -116,7 +130,7 @@ func init_z_tracker(world : Node2D):
 			var index = world_child.z_index; 
 			for tilemap_child in world_child.get_children():
 				if (tilemap_child is Entity):
-					init_entity_dict(tilemap_child, index, world);
+					init_entity_dict(tilemap_child, index);
 					
 			tilemaps[index] = world_child;
 			walls[index] = world_child.find_node(Globals.STATIC_BODY_WALLS_NAME, false, false);
@@ -124,7 +138,6 @@ func init_z_tracker(world : Node2D):
 			
 	for key in entity_z_tracker:
 		manage_colliders(key);
-		manage_personal_colliders(key);
 		key.connect(key.SIGNAL_CHANGED_ENTITY_POSITION, self, self.LISTENER_ON_CHANGED_ENTITY_POSITION);
 		key.connect(key.SIGNAL_FELL_BELOW_THRESHOLD, self, self.LISTENER_ON_FELL_BELOW_THRESHOLD);
 		key.connect(key.SIGNAL_FINISHED_FALLING, self, self.LISTENER_ON_FINISHED_FALLING);
@@ -140,7 +153,7 @@ appear behind tiles when it should be in front.  It also dropped by fps by about
 
 now i use shaders, which instead of manually erasing pixels off the sprite, masks said pixels instead
 """
-func _physics_process(delta):
+func _physics_process(_delta):
 	while (sprites_to_delete.size() > 0):
 		var sprite = sprites_to_delete.pop_front();
 		sprite.free();
@@ -279,24 +292,11 @@ func _on_player_shot(shooter : Player, shot_type, goal : Vector2):
 """
 Initialises an entity's dictionary entities so this resource can store relevant info about each entity.
 """
-func init_entity_dict(entity : Entity, z_index : int, world : Node2D):
+func init_entity_dict(entity : Entity, z_index : int):
 	entity_z_tracker[entity] = {CURRENT_Z: z_index, QUEUE: []};
 	entity_tile_tracker[entity] = 	{CURRENT_TILE: Vector2(0, 0), 
 									 NORTH_TILE: Vector2(0, 0), EAST_TILE: Vector2(0, 0),
 									 SOUTH_TILE: Vector2(0, 0), WEST_TILE: Vector2(0, 0)};
-			
-	var static_body = StaticBody2D.new(); world.add_child(static_body);
-#	var north_wall = CollisionPolygon2D.new(); static_body.add_child(north_wall);
-#	var east_wall = CollisionPolygon2D.new(); static_body.add_child(east_wall);
-#	var south_wall = CollisionPolygon2D.new(); static_body.add_child(south_wall);
-#	var west_wall = CollisionPolygon2D.new(); static_body.add_child(west_wall);
-			
-	static_body.set_collision_layer(64);
-	static_body.set_collision_mask(12);
-			
-#	entity_colliders[entity] = {STATIC_BODY: static_body, 
-#			NORTH_WALL: north_wall, EAST_WALL: east_wall,
-#			SOUTH_WALL: south_wall, WEST_WALL: west_wall};
 			
 	entity_redraw_tracker[entity] = 	{REDRAW: false, NORTH_MASK: Vector2(INF, INF), 
 										 EAST_MASK: Vector2(INF, INF), SOUTH_MASK: Vector2(INF, INF),
@@ -322,16 +322,6 @@ func manage_colliders(entity : Entity):
 				ledges[i].remove_collision_exception_with(entity);
 			else:
 				ledges[i].add_collision_exception_with(entity);
-	
-"""
-Iterates through each entity's personal colliders and excludes other entities.
-"""
-func manage_personal_colliders(entity : Entity):
-	var entities : Array = entity_colliders.keys();
-	for each in entities:
-		if (each != entity):
-			entity_colliders[each][STATIC_BODY].add_collision_exception_with(entity);
-			entity_colliders[entity][STATIC_BODY].add_collision_exception_with(each);
 	
 """
 Moves entity across tilemaps so they're YSorted properly.
@@ -404,40 +394,6 @@ func set_adjacent_tile(entity : Entity, tilemap : TileMap, current_tile : Vector
 	if (entity_tile_tracker[entity][direction] == current_tile):
 		if (tilemap.get_cellv(coords) != tilemap.INVALID_CELL):
 			entity_tile_tracker[entity][direction] = coords;
-
-"""
-Defines the personal colliders of an entity, then disables/enables them based on the
-entity's adjacent tiles.
-Currently this function assumes that every shape has four sides only, and may be expanded in the future
-to include stuff like circular tables/tiles, etc.
-"""
-func fill_personal_colliders(entity : Entity, current_tile : Vector2, tilemap : TileMap):
-	var coordinates : Vector2 = tilemap.map_to_world(current_tile) + Vector2(0, -tilemap.cell_size.y);
-	
-	var top = coordinates; #this is a pretty flawed method if we ever change tile shapes
-	var right = coordinates + Vector2(tilemap.cell_size.x/2, tilemap.cell_size.y/2); 
-	var bot = coordinates + Vector2(0, tilemap.cell_size.y);
-	var left = coordinates + Vector2(-tilemap.cell_size.x/2, tilemap.cell_size.y/2); 
-
-	entity_colliders[entity][NORTH_WALL].set_polygon(PoolVector2Array([top, right]));
-	entity_colliders[entity][EAST_WALL].set_polygon(PoolVector2Array([right, bot]));
-	entity_colliders[entity][SOUTH_WALL].set_polygon(PoolVector2Array([bot, left]));
-	entity_colliders[entity][WEST_WALL].set_polygon(PoolVector2Array([left, top]));
-	
-	set_personal_collider(entity, NORTH_TILE, NORTH_WALL, current_tile);
-	set_personal_collider(entity, EAST_TILE, EAST_WALL, current_tile);
-	set_personal_collider(entity, SOUTH_TILE, SOUTH_WALL, current_tile);
-	set_personal_collider(entity, WEST_TILE, WEST_WALL, current_tile);
-	
-"""
-Sets a personal collider to enabled or disabled based on whether its entity has 
-an adjacent tile in that direction or not
-"""
-func set_personal_collider(entity : Entity, tile_direction : String, wall_direction : String, current_tile : Vector2):
-	if (entity_tile_tracker[entity][tile_direction] == current_tile):
-		entity_colliders[entity][wall_direction].set_disabled(false);
-	else:
-		entity_colliders[entity][wall_direction].set_disabled(true);
 		
 """
 For falling entities only.  Checks if there is a tiles around the entity's

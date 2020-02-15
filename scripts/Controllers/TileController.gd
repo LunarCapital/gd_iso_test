@@ -52,7 +52,7 @@ func setup_world_tiles():
 	create_tilemap_walls(tilemaps_to_smoothed_edges);
 	var tilemaps_to_ledges : Dictionary = ledges_array_builder.build_ledges(tilemaps_to_edges, edge_smoother);
 	tilemaps_to_ledges = ledge_superimposer.superimpose_ledges(tilemaps_to_ledges);
-	build_tilemap_ledges(tilemaps_to_ledges);
+	create_tilemap_ledges(tilemaps_to_ledges);
 
 """
 Creates an area2D based off a tilemap's walkable tile areas.
@@ -104,7 +104,7 @@ func create_tilemap_walls(tilemaps_to_smoothed_edges : Dictionary):
 Constructs the ledges 3d array (and tilemaps_to_ledges dictionary) into usable collisionpolygon2ds.
 A separate function because there's so many damn ledge groups.
 """
-func build_tilemap_ledges(tilemaps_to_ledges):
+func create_tilemap_ledges(tilemaps_to_ledges):
 	for n in range(tilemaps.size() -1, -1, -1):
 		var tilemap = tilemaps[n];
 		if (tilemap):

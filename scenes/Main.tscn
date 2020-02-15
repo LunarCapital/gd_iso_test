@@ -6,7 +6,7 @@
 [ext_resource path="res://scenes/Entities/Players/Moon.tscn" type="PackedScene" id=4]
 [ext_resource path="res://scripts/Camera/2PCam.gd" type="Script" id=5]
 [ext_resource path="res://scenes/GUI/GUI.tscn" type="PackedScene" id=6]
-[ext_resource path="res://scripts/Controllers/WorldController.gd" type="Script" id=7]
+[ext_resource path="res://scenes/Controllers/WorldController.tscn" type="PackedScene" id=7]
 [ext_resource path="res://scenes/Controllers/TileController.tscn" type="PackedScene" id=8]
 
 [node name="Main" type="Node"]
@@ -58,7 +58,6 @@ margin_bottom = 112.0
 
 [node name="Controllers" type="Node2D" parent="."]
 
-[node name="WorldController" type="Node2D" parent="Controllers"]
-script = ExtResource( 7 )
+[node name="WorldController" parent="Controllers" instance=ExtResource( 7 )]
 
 [node name="TileController" parent="Controllers" instance=ExtResource( 8 )]
