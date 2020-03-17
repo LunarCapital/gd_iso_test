@@ -50,6 +50,8 @@ func superimpose_ledges(tilemaps_to_ledges : Dictionary) -> Dictionary:
 							superimposed_ledge.a += Vector2(0, -Globals.TILE_HEIGHT);
 							superimposed_ledge.b += Vector2(0, -Globals.TILE_HEIGHT);
 							superimposed_ledge.tile += Vector2(-1, -1);
+							while (superimposed_ledge_count >= superimposed_ledges[edge_group].size()):
+								superimposed_ledges[edge_group].append([]);
 							superimposed_ledges[edge_group][superimposed_ledge_count].append(superimposed_ledge);
 						else:
 							superimposed_ledge_count += 1;

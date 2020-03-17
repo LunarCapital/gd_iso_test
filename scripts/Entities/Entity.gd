@@ -23,11 +23,15 @@ const FALL_SPEED = 1 # Pixels/frame
 onready var sprite = $Sprite;
 
 #globals
+var original_sprite_y : float;
 var prev_position : Vector2 = Vector2(0, 0);
 var prev_velocity : Vector2 = Vector2(0, 0);
 var falling : bool = false;
 var falling_threshold : bool = false;
 var falling_checkpoint : float = 0;
+
+func _ready():
+	original_sprite_y = self.sprite.position.y;
 
 func _physics_process(delta):
 	if (prev_position != self.position):
@@ -35,7 +39,7 @@ func _physics_process(delta):
 		prev_position = self.position;
 		
 	if (falling):
-		if (self.sprite.position.y < 0):
+		if (self.sprite.position.y < original_sprite_y):
 			if (Input.is_action_pressed("move_jump")):
 				return;
 			self.sprite.position.y += FALL_SPEED;
@@ -48,5 +52,5 @@ func _physics_process(delta):
 		else:
 			#UPDATE LAYER
 			falling = false;
-			self.sprite.position.y = 0;
+			self.sprite.position.y = original_sprite_y;
 			emit_signal(SIGNAL_FINISHED_FALLING, self);

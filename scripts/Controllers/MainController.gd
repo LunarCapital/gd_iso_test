@@ -9,7 +9,7 @@ For example, damage calculations for when the bullet instance emits a signal ale
 
 #module loading
 onready var world_control = $Controllers/WorldController
-onready var world_tiler = $Controllers/TileController
+onready var tile_control = $Controllers/TileController
 onready var world_node = find_node("World");
 
 #resource loading
@@ -25,9 +25,9 @@ func _ready():
 	sun.player_role = Globals.BACKLINE;
 	moon.player_role = Globals.FRONTLINE;
 
-	world_tiler.init(world_node.get_children());
-	world_tiler.setup_world_tiles();
-	world_control.call_deferred("init_z_tracker", world_node);
+	tile_control.init(world_node.get_children());
+	tile_control.setup_world_tiles();
+	world_control.call_deferred("init", world_node);
 	
 	setup_base_signals();
 	setup_level_signals();

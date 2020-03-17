@@ -40,12 +40,18 @@ only ever happen for ledges that have edges which do not form a loop.
 """
 func sort_edges(edges: Array) -> Array:
 	var sorted_edges : Array = Functions.init_2d_array(edges.size());
+	reset_checked_edges(edges);
+	
+	print("sort edges run");
+	for i in range(edges.size()):
+		var count = 0;
+		for edge in edges[i]:
+			print(str(i) + ", " + str(count) + ": " + str(edge.a) + ", " + str(edge.b));
 	
 	for i in range(edges.size()): 
 		var unchecked_edges : Array = get_unchecked_edges(edges[i]);
 		var reversed : bool = false;
 		while (unchecked_edges.size() > 0): #WHILE THERE ARE STILL UNCHECKED EDGES
-		
 			var grabbed_edge : Edge;
 			var previous_edge : Edge;
 
@@ -58,6 +64,16 @@ func sort_edges(edges: Array) -> Array:
 				grabbed_edge = grab_shared_edge(unchecked_edges, previous_edge);
 				check_edge(edges, i, grabbed_edge);
 				
+#				print("prev edge: " + str(previous_edge.a) + ", " + str(previous_edge.b));
+#				print("grab edge: " + str(grabbed_edge.a) + ", " + str(grabbed_edge.b));
+#				var count = 0;
+##				for sorted_edge in sorted_edges[i]:
+##					print("sorted edge #" + str(count) + ": " + str(sorted_edge.a) + ", " + str(sorted_edge.b));
+##					count += 1;
+#				for edge in edges[i]:
+#					print("edge #" + str(count) + ": " + str(edge.a) + ", " + str(edge.b));
+#					count += 1;
+
 				if (grabbed_edge == previous_edge): #no more edges to grab that extend off polygon in CCW direction					
 					#attempt to go in reverse direction.
 					var reversed_previous_edge = previous_edge.get_reverse_edge();
@@ -122,6 +138,13 @@ func fill_smoothed_edges(sorted_edges : Array):
 
 	return smoothed_edges;
 
+"""
+Unchecks edges in array (in case sorting or smoothing is required again)
+"""
+func reset_checked_edges(edges : Array):
+	for i in edges.size():
+		for edge in edges[i]:
+			edge.checked = false;
 
 """
 Returns an array of unchecked edges.

@@ -18,7 +18,7 @@ and have to check 'why is this array 2d again'
 
 enum {UNCONNECTED = 0, CONNECTED = 1}
 
-func build_edges(tilemaps : Array):
+func build_edges(tilemaps : Array, edge_smoother):
 	var tilemap_to_edges: Dictionary = {}; 
 	
 	for n in range(tilemaps.size()):
@@ -36,6 +36,8 @@ func build_edges(tilemaps : Array):
 					color_max += 1;
 	
 			var edges : Array = fill_edges(polygons, color_max);
+			edges = remove_intersections(edges);
+			edges = edge_smoother.sort_edges(edges);
 			tilemap_to_edges[tilemap] = edges;
 			
 	return tilemap_to_edges;
@@ -133,6 +135,18 @@ func fill_edges(polygons : Array, color_max : int):
 							duplicate_edge.intersection = true;
 	return edges;
 
+"""
+Removes all edges with intersections from array.
+"""
+func remove_intersections(edges : Array):
+	var edges_without_intersections : Array = Functions.init_2d_array(edges.size());
+	for i in edges.size():
+		for edge in edges[i]:
+			if (!edge.intersection):
+				edges_without_intersections[i].append(edge);
+	
+	return edges_without_intersections;
+	
 """
 Returns an array of duplicate edges.
 """

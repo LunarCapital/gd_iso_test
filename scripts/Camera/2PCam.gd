@@ -26,6 +26,7 @@ func _process(_delta):
 	if (self.position != cam_goal): #move towards cam goal.
 		var move_direction = cam_goal - self.position;
 		self.position += (move_direction/CAM_DELAY); #will move faster based off how far
+		self.position = self.position.round();
 		self.align();
 		
 	emit_signal(SIGNAL_CHANGED_POSITION, get_camera_screen_center(), self.zoom);

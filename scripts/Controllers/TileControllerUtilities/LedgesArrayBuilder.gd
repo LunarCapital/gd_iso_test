@@ -18,11 +18,7 @@ func build_ledges(tilemaps_to_edges : Dictionary, edge_smoother) -> Dictionary:
 		for edge_group in ledges.size():
 			
 			var ledge_edge_group_array : Array = ledges[edge_group];
-			
-			for ledge_group in ledges[edge_group].size():
-				for ledge_index in ledges[edge_group][ledge_group].size():
-					ledges[edge_group][ledge_group][ledge_index].checked = false;
-					
+								
 			ledges[edge_group] = edge_smoother.sort_edges(ledge_edge_group_array);
 			
 		tilemaps_to_ledges[tilemap][tilemap] = ledges;
@@ -50,16 +46,17 @@ func create_tilemap_ledges(tilemaps_to_edges : Dictionary) -> Dictionary:
 		var tilemap = tilemaps[n];
 		if (tilemap):
 			var edges = tilemaps_to_edges[tilemap];
-
 			var ledges : Array = Functions.init_3d_array(edges.size());
 
 			#FILL 3D ARRAY OF LEDGES
 			for edge_group in edges.size():
 				var ledge_group = 0;
+				print("new edge group loop");
 				for edge_index in edges[edge_group].size():
 					var edge = edges[edge_group][edge_index];
 					if (edge.intersection):
 						continue;
+					
 					
 					var current_tile : Vector2 = edge.tile;
 					var current_layer = tilemap.z_index;

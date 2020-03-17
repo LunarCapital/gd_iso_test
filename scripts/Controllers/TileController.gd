@@ -45,7 +45,7 @@ func fill_tilemaps_array(world_children : Array):
 		tilemaps[child.z_index] = child; #assumes that all tilemaps have differing z-indexes
 
 func setup_world_tiles():
-	var tilemaps_to_edges : Dictionary = edges_array_builder.build_edges(tilemaps);
+	var tilemaps_to_edges : Dictionary = edges_array_builder.build_edges(tilemaps, edge_smoother);
 	var tilemaps_to_smoothed_edges : Dictionary = edge_smoother.build_smoothed_edges(tilemaps_to_edges);
 	
 	create_tilemap_area2d(tilemaps_to_smoothed_edges);
@@ -151,11 +151,13 @@ func construct_collision_poly(smoothed_edges : Array):
 	for i in range(smoothed_edges.size()):
 		polygon_vertices.append(smoothed_edges[i].a);
 		
+	if (smoothed_edges.size() == 0):
+		return cp2d;
+		
 	if (smoothed_edges[0].a != smoothed_edges[smoothed_edges.size() - 1].b):
 		polygon_vertices.append(smoothed_edges[smoothed_edges.size() - 1].b);
-		
-	cp2d.set_polygon(polygon_vertices);
 	
+	cp2d.set_polygon(polygon_vertices);
 	return cp2d;
 
 func make_palindrome(cp2d : CollisionPolygon2D):
