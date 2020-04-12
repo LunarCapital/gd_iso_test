@@ -32,6 +32,15 @@ func _ready():
 	setup_base_signals();
 	setup_level_signals();
 	
+	#DEBUG
+	print("\n\nDEBUG\n\n")
+	var test : Dictionary = {};
+	test[["tilemap1", "In"]] = 5;
+	print(test[["tilemap1", "In"]]);
+	print(test.keys());
+	print("\n\nEND DEBUG\n\n")
+	#END DEBUG
+	
 func setup_base_signals():
 	var _connect;
 	_connect = sun.connect(sun.SIGNAL_CHANGED_PLAYER_POSITION, PlayerStats, PlayerStats.LISTENER_UPDATE_PLAYER_POS);

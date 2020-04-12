@@ -36,8 +36,13 @@ func build_edges(tilemaps : Array, edge_smoother):
 					color_max += 1;
 	
 			var edges : Array = fill_edges(polygons, color_max);
-			edges = remove_intersections(edges);
-			edges = edge_smoother.sort_edges(edges);
+			for edge_group in edges.size():	
+				edges[edge_group] = remove_intersections(edges[edge_group]);
+				edges[edge_group] = edge_smoother.sort_edges(edges[edge_group]);
+				#change above line to sorted_edges = 
+					#if sorted_edges < edges[edge_group] then we have leftover edges (due to donut)
+					#sent them into sort_edges() again to be sorted, then append
+				
 			tilemap_to_edges[tilemap] = edges;
 			
 	return tilemap_to_edges;
@@ -139,11 +144,10 @@ func fill_edges(polygons : Array, color_max : int):
 Removes all edges with intersections from array.
 """
 func remove_intersections(edges : Array):
-	var edges_without_intersections : Array = Functions.init_2d_array(edges.size());
-	for i in edges.size():
-		for edge in edges[i]:
-			if (!edge.intersection):
-				edges_without_intersections[i].append(edge);
+	var edges_without_intersections : Array = [];
+	for edge in edges:
+		if (!edge.intersection):
+			edges_without_intersections.append(edge);
 	
 	return edges_without_intersections;
 	

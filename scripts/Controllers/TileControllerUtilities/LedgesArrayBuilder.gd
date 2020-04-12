@@ -16,10 +16,9 @@ func build_ledges(tilemaps_to_edges : Dictionary, edge_smoother) -> Dictionary:
 		var ledges : Array = tilemaps_to_ledges[tilemap][tilemap];
 		
 		for edge_group in ledges.size():
-			
-			var ledge_edge_group_array : Array = ledges[edge_group];
-								
-			ledges[edge_group] = edge_smoother.sort_edges(ledge_edge_group_array);
+			for ledge_group in ledges[edge_group].size():
+				var single_ledge_group : Array = ledges[edge_group][ledge_group];
+				ledges[edge_group][ledge_group] = edge_smoother.sort_edges(single_ledge_group);
 			
 		tilemaps_to_ledges[tilemap][tilemap] = ledges;
 	

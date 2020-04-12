@@ -33,7 +33,7 @@ func superimpose_ledges(tilemaps_to_ledges : Dictionary) -> Dictionary:
 			var superimposed_tilemap = tilemaps[t];
 			var superimposed_tilemap_predecessor = tilemaps[t - 1]; #ALWAYS use this to superimpose to the next tilemap (aka superimposed_tilemap)
 			
-			if (superimposed_tilemap.z_index <= tilemap.z_index): 
+			if (superimposed_tilemap.z_index <= tilemap.z_index): #ignore tilemaps 'beneath' the current one
 				continue;
 		
 			var ledges : Array = tilemaps_to_ledges[tilemap][superimposed_tilemap_predecessor];

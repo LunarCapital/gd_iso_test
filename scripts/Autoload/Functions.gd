@@ -30,6 +30,17 @@ func init_3d_array(size : int):
 		array3d[i] = init_2d_array(size);
 	return array3d;
 
+"""
+Returns an array containing objects that 
+appear in the ORIGINAL array but not the COMPARISON array.
+"""
+func set_difference(original_array : Array, comparison_array : Array):
+	var difference_array : Array = [];
+	for element in original_array:
+		if (!comparison_array.has(element)):
+			difference_array.append(element);
+	return difference_array;
+
 ###########################
 ###########################
 #######TILE UTILITY########
