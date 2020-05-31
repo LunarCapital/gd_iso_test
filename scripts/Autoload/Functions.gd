@@ -43,6 +43,24 @@ func set_difference(original_array : Array, comparison_array : Array):
 
 ###########################
 ###########################
+#####GEOMETRY UTILITY######
+###########################
+###########################
+
+"""
+Finds the area of a polygon, regular or irregular.  
+Requires input 'polygon' to be an array of 
+Edges which are sorted in order.
+"""
+func get_area_of_polygon(polygon : Array) -> float:
+	var area : float = 0;
+	for edge in polygon:
+		area += (edge.b.x * edge.a.y - edge.b.y * edge.a.x);
+	area = abs(area/2);
+	return area;
+
+###########################
+###########################
 #######TILE UTILITY########
 ###########################
 ###########################

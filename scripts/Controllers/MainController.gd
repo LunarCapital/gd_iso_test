@@ -31,16 +31,7 @@ func _ready():
 	
 	setup_base_signals();
 	setup_level_signals();
-	
-	#DEBUG
-	print("\n\nDEBUG\n\n")
-	var test : Dictionary = {};
-	test[["tilemap1", "In"]] = 5;
-	print(test[["tilemap1", "In"]]);
-	print(test.keys());
-	print("\n\nEND DEBUG\n\n")
-	#END DEBUG
-	
+		
 func setup_base_signals():
 	var _connect;
 	_connect = sun.connect(sun.SIGNAL_CHANGED_PLAYER_POSITION, PlayerStats, PlayerStats.LISTENER_UPDATE_PLAYER_POS);
@@ -69,5 +60,6 @@ func setup_level_signals():
 					
 	var _connect;
 	for i in range(area2ds.size()):
-		_connect = area2ds[i].connect(area2ds[i].SIGNAL_ENTITY_ENTERED_AREA, world_control, world_control.LISTENER_ON_AREA_ENTERED);
-		_connect = area2ds[i].connect(area2ds[i].SIGNAL_ENTITY_EXITED_AREA, world_control, world_control.LISTENER_ON_AREA_EXITED);
+		if area2ds[i].name != "TestArea": # very ass bandaid fix that i'm going to have to smash later
+			_connect = area2ds[i].connect(area2ds[i].SIGNAL_ENTITY_ENTERED_AREA, world_control, world_control.LISTENER_ON_AREA_ENTERED);
+			_connect = area2ds[i].connect(area2ds[i].SIGNAL_ENTITY_EXITED_AREA, world_control, world_control.LISTENER_ON_AREA_EXITED);

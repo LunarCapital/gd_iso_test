@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=2]
+[gd_scene load_steps=10 format=2]
 
 [ext_resource path="res://scripts/Controllers/MainController.gd" type="Script" id=1]
 [ext_resource path="res://scenes/TileMap.tscn" type="PackedScene" id=2]
@@ -8,6 +8,7 @@
 [ext_resource path="res://scenes/GUI/GUI.tscn" type="PackedScene" id=6]
 [ext_resource path="res://scenes/Controllers/WorldController.tscn" type="PackedScene" id=7]
 [ext_resource path="res://scenes/Controllers/TileController.tscn" type="PackedScene" id=8]
+[ext_resource path="res://scripts/Debug/TestArea.gd" type="Script" id=9]
 
 [node name="Main" type="Node"]
 script = ExtResource( 1 )
@@ -15,28 +16,36 @@ script = ExtResource( 1 )
 [node name="World" type="Node2D" parent="."]
 
 [node name="Layer0" parent="World" instance=ExtResource( 2 )]
-tile_data = PoolIntArray( -1, 1, 0, -65536, 1, 0, -65535, 1, 0, 65535, 1, 0, 0, 1, 0, 1, 1, 0, 131071, 1, 0, 65536, 1, 0, 65537, 1, 0 )
 
 [node name="Layer1" parent="World" instance=ExtResource( 2 )]
 z_index = 1
 tile_data = PoolIntArray( -65538, 0, 0, -65537, 0, 0, -131072, 0, 0, -2, 0, 0, -65536, 0, 0, 65534, 0, 0, 65535, 0, 0, 0, 0, 0 )
 
-[node name="Sun" parent="World/Layer1" instance=ExtResource( 3 )]
-position = Vector2( 0.225868, -16.1725 )
+[node name="TestArea" type="Area2D" parent="World/Layer1"]
+script = ExtResource( 9 )
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="World/Layer1/TestArea"]
+polygon = PoolVector2Array( 0, 0, -96, -48, 0, -96, 96, -48 )
 
 [node name="Layer2" parent="World" instance=ExtResource( 2 )]
 z_index = 2
 
+[node name="Sun" parent="World/Layer2" instance=ExtResource( 3 )]
+position = Vector2( -60.636, -46.8878 )
+
 [node name="Moon" parent="World/Layer2" instance=ExtResource( 4 )]
-position = Vector2( -2.61879, -75.7173 )
+position = Vector2( -0.159943, -78.7909 )
 
 [node name="Layer3" parent="World" instance=ExtResource( 2 )]
+visible = false
 z_index = 3
 
 [node name="Layer4" parent="World" instance=ExtResource( 2 )]
+visible = false
 z_index = 4
 
 [node name="Layer5" parent="World" instance=ExtResource( 2 )]
+visible = false
 z_index = 5
 
 [node name="Camera2D" type="Camera2D" parent="." groups=[
@@ -53,7 +62,8 @@ transform = Transform2D( 2, 0, 0, 2, 0, 0 )
 
 [node name="GUI" parent="GUI_Main" instance=ExtResource( 6 )]
 anchor_right = 0.0
-margin_right = 240.0
+margin_left = 0.231644
+margin_right = 240.232
 margin_bottom = 112.0
 
 [node name="Controllers" type="Node2D" parent="."]

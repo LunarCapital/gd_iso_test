@@ -14,3 +14,5 @@ const TILE_HEIGHT = 32;
 #constant names
 const STATIC_BODY_LEDGES_NAME : String = "LayerLedges";
 const STATIC_BODY_WALLS_NAME : String = "LayerWalls"; 
+const DONUT_OUT : String = "DonutOut";
+const DONUT_IN : String = "DonutIn"; #these two refer to the inner and outer edges of a donut polygon

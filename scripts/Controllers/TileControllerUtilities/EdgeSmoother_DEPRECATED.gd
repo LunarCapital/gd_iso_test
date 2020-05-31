@@ -11,43 +11,26 @@ but i spent more time than i'm willing to admit writing this code and might as w
 since it doesn't take that long to run
 """
 	
-func build_smoothed_edges(tilemap_to_edges : Dictionary):
+func build_smoothed_edges(tilemap_to_edges : Dictionary, tilemaps : Array):
 	var tilemaps_to_smoothed_edges : Dictionary = {};
-	var tilemaps : Array = tilemap_to_edges.keys();
 	
 	for tilemap in tilemaps:
-		var groups_of_edges : Array = tilemap_to_edges[tilemap];
-		var groups_of_smoothed_edges : Array = Functions.init_2d_array(groups_of_edges.size());
-		for i in range(groups_of_edges.size()):
-			if (i >= groups_of_smoothed_edges.size()):
-				groups_of_smoothed_edges.append([]);
+		var edge_group : int = tilemap_to_edges[tilemap];
+		tilemaps_to_smoothed_edges[tilemap] = edge_group;
 		
-			print(tilemap.name);
-			print("groups of edges size: " + str(groups_of_edges[i].size()));
-			print(groups_of_edges.size());
-		
-			var sorted_edges : Array = sort_edges(groups_of_edges[i]);
-			print(str(sorted_edges.size()) + ", " + str(groups_of_edges[i].size()));
-			if (sorted_edges.size() < groups_of_edges[i].size()): #WE HAVE DONUT SHAPED TILE GROUP.
-				var inside_edges : Array = Functions.set_difference(groups_of_edges[i], sorted_edges);
-				#perform edge sorting on donut too.
-				print(inside_edges);
-				print("INSIDE DONUT");
-				#what to do with donut edges? where to store them?
-				#create class that stores two arrays, outside and donut edges?
-				#most tile groups will just have the first array filled (because not donut)?
-				#include donut edges in wall construction?
-				#donut edges should have a 'negative area2D' where an entity in it leaves the 'floor'?
-				#SAME FLOOR-HEIGHT IN DONUT SCENARIO: 
-					#problem: if you teleport from outside donut into same-floor-height-in-donut
-							  #you enter both negative area and same-floor-height area at same time
-					#solution 1: raycast teleports?
-					#solution 2: have donut areas only cancel out their corresponding floor?
-				
-			var smoothed_edges : Array = fill_smoothed_edges(sorted_edges);
-			groups_of_smoothed_edges[i] = smoothed_edges;
+		for i in range(edge_group): #smooth outside edges first
+			var outside_edges : Array = tilemap_to_edges[[tilemap, i, Globals.DONUT_OUT]];		
+			var sorted_outside_edges : Array = sort_edges(outside_edges);
+			var smoothed_outside_edges : Array = fill_smoothed_edges(sorted_outside_edges);
+			tilemaps_to_smoothed_edges[[tilemap, i, Globals.DONUT_OUT]] = smoothed_outside_edges;
 			
-		tilemaps_to_smoothed_edges[tilemap] = groups_of_smoothed_edges;
+			var inside_edges : Array = tilemap_to_edges[[tilemap, i, Globals.DONUT_IN]];
+			if (inside_edges.size() > 0): #smooth inside edges, if inside edges exist
+				var sorted_inside_edges : Array = sort_edges(inside_edges);
+				var smoothed_inside_edges : Array = fill_smoothed_edges(sorted_inside_edges);
+				tilemaps_to_smoothed_edges[[tilemap, i, Globals.DONUT_IN]] = smoothed_inside_edges;
+			else:
+				tilemaps_to_smoothed_edges[[tilemap, i, Globals.DONUT_IN]] = inside_edges;
 		
 	return tilemaps_to_smoothed_edges;
 		

@@ -12,12 +12,16 @@ Its last variable, tile, describes the coordinates of the edge's corresponding t
 unless the edge is a merged edge, in which case the tile variable will be set to Vector2(INF, INF);
 """
 
+#VARIABLES
 var a : Vector2;
 var b : Vector2;
 var checked : bool = false;
 var intersection : bool = false; 
 var tile : Vector2;
 var tile_side : int;
+
+func print_edge() -> void:
+	print(str(a) + ", " + str(b));
 
 """
 Returns the reverse of an edge.

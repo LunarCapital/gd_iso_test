@@ -113,12 +113,12 @@ func _on_request_reparent(entity : Entity, tilemap : TileMap):
 func _on_changed_entity_position(entity : Entity, pos : Vector2):
 	position_tracker.on_changed_entity_position(entity_pos_tracker, entity, pos, tilemaps);
 
-func _on_area_entered(floor_area : Area2D, entity : Entity):
+func _on_area_entered(floor_area : Area2D, entity : Entity, state : int):
 	print("area entered");
-	position_tracker.on_area_entered(entity_pos_tracker, floor_area, entity);
+	position_tracker.on_area_entered(entity_pos_tracker, floor_area, entity, state);
 	
-func _on_area_exited(floor_area : Area2D, entity : Entity):
-	position_tracker.on_area_exited(entity_pos_tracker, floor_area, entity);
+func _on_area_exited(floor_area : Area2D, entity : Entity, state : int):
+	position_tracker.on_area_exited(entity_pos_tracker, floor_area, entity, state);
 
 func _on_fell_below_threshold(entity : Entity):
 	falling_handler.on_fell_below_threshold(entity_redraw_tracker, entity);

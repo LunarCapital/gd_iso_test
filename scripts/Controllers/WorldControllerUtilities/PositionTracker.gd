@@ -43,7 +43,7 @@ func on_changed_entity_position(entity_pos_tracker : Dictionary, entity : Entity
 	var current_tile = tilemap.world_to_map(pos) + Vector2(1,1);
 						
 	if (entity_pos_tracker[entity][CURRENT_TILE] != current_tile or not entity_pos_tracker[entity][AREA_SET].has(z_index - 1)): #only need to do recalculations if we change our current tile OR we're not in the 'tilemap' that we should be in
-		print("changed tile: " + str(current_tile) + ", layer: " + str(tilemap.name) + " pos: " + str(pos));
+		#print("changed tile: " + str(current_tile) + ", layer: " + str(tilemap.name) + " pos: " + str(pos));
 		entity_pos_tracker[entity][CURRENT_TILE] = current_tile;
 		fill_adjacent_tiles(entity_pos_tracker, entity, tilemaps);
 	
@@ -60,20 +60,24 @@ Listener function that runs when a layer's floor area is entered by an entity.
 Adds the layer's z index to a queue. Used to keep track of whether an entity is standing on the 'edge'
 of a tile.
 """
-func on_area_entered(entity_pos_tracker : Dictionary, floor_area : Area2D, entity : Entity):
-	var tilemap_index = floor_area.get_parent().z_index;
-	if (!entity_pos_tracker[entity][AREA_SET].has(tilemap_index)):
-		entity_pos_tracker[entity][AREA_SET].push_back(tilemap_index);
+func on_area_entered(entity_pos_tracker : Dictionary, floor_area : Area2D, entity : Entity, state : int):
+	if (state == floor_area.WALKABLE):
+		var tilemap_index = floor_area.get_parent().z_index;
+		if (!entity_pos_tracker[entity][AREA_SET].has(tilemap_index)):
+			entity_pos_tracker[entity][AREA_SET].push_back(tilemap_index);
 	
 """
 Listener function that runs when an entity leaves a layer's floor area.
 Removes the layer's z index to a queue. Used to keep track of whether an entity is standing on the 'edge'
 of a tile.
 """
-func on_area_exited(entity_pos_tracker : Dictionary, floor_area : Area2D, entity : Entity):
-	var tilemap_index = floor_area.get_parent().z_index;	
-	if (entity_pos_tracker[entity][AREA_SET].has(tilemap_index)):
-		entity_pos_tracker[entity][AREA_SET].erase(tilemap_index);
+func on_area_exited(entity_pos_tracker : Dictionary, floor_area : Area2D, entity : Entity, state : int):
+	if (state == floor_area.WALKABLE):
+		print(entity.name + " exited " + floor_area.name);
+		print(entity_pos_tracker[entity][AREA_SET]);
+		var tilemap_index = floor_area.get_parent().z_index;	
+		if (entity_pos_tracker[entity][AREA_SET].has(tilemap_index)):
+			entity_pos_tracker[entity][AREA_SET].erase(tilemap_index);
 	
 """
 Attempts to find the four adjacent tiles of where a specific entity is, then writes these into
