@@ -9,10 +9,20 @@
 config_version=4
 
 _global_script_classes=[ {
+"base": "Node",
+"class": "BipartiteGraph",
+"language": "GDScript",
+"path": "res://scripts/Controllers/TileControllerUtilities/BipartiteGraph.gd"
+}, {
 "base": "KinematicBody2D",
 "class": "Bullet",
 "language": "GDScript",
 "path": "res://scripts/Entities/Players/Instances/Bullet.gd"
+}, {
+"base": "Node",
+"class": "Chord",
+"language": "GDScript",
+"path": "res://scripts/Controllers/TileControllerUtilities/Chord.gd"
 }, {
 "base": "Reference",
 "class": "Edge",
@@ -34,6 +44,11 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://scripts/Entities/Entity.gd"
 }, {
+"base": "Node",
+"class": "MinCyclesGraph",
+"language": "GDScript",
+"path": "res://scripts/Controllers/TileControllerUtilities/MinCyclesGraph.gd"
+}, {
 "base": "Entity",
 "class": "Player",
 "language": "GDScript",
@@ -45,11 +60,14 @@ _global_script_classes=[ {
 "path": "res://scripts/Controllers/TileControllerUtilities/TliePerimeter.gd"
 } ]
 _global_script_class_icons={
+"BipartiteGraph": "",
 "Bullet": "",
+"Chord": "",
 "Edge": "",
 "EdgeCollection": "",
 "Enemy": "",
 "Entity": "",
+"MinCyclesGraph": "",
 "Player": "",
 "TilePerimeter": ""
 }

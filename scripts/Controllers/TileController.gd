@@ -93,7 +93,7 @@ func create_tilemap_area2d(tilemaps_to_edges : Dictionary, area_name : String) -
 			var hole_groups : int = tilemaps_to_edges[[tilemap, i]];
 			var array_of_perimeters : Array = []; # index 0 is polygon, 1-inf is holes
 			for j in range(hole_groups):
-				array_of_perimeters.append(tilemaps_to_edges[[tilemap, i, j]].get_collection());
+				array_of_perimeters.append(tilemaps_to_edges[[tilemap, i, j]].get_smoothed_collection());
 
 			var cp2d_areas_of_rectangle_decomposition : Array = floor_partitioner.decompose_into_rectangles(array_of_perimeters);
 			
@@ -131,9 +131,9 @@ func create_tilemap_walls(tilemaps_to_edges : Dictionary) -> void:
 			var edge_groups : int = tilemaps_to_edges[tilemap];
 
 			for i in range(edge_groups): #make collisionpoly2d for each tile group
-				var cp2d_walls_out : CollisionPolygon2D = build_cp2d_wall_and_shift(tilemaps_to_edges[[tilemap, i, Globals.DONUT_OUT]], n);
+				var cp2d_walls_out : CollisionPolygon2D = build_cp2d_wall_and_shift(tilemaps_to_edges[[tilemap, i, Globals.DONUT_OUT]]);
 				cp2d_walls_out.name = WALLS_CP2D_NAME + Globals.DONUT_OUT + "_" + str(i);
-				var cp2d_walls_in : CollisionPolygon2D = build_cp2d_wall_and_shift(tilemaps_to_edges[[tilemap, i, Globals.DONUT_IN]], n);
+				var cp2d_walls_in : CollisionPolygon2D = build_cp2d_wall_and_shift(tilemaps_to_edges[[tilemap, i, Globals.DONUT_IN]]);
 				cp2d_walls_in.name = WALLS_CP2D_NAME + Globals.DONUT_IN + "_" + str(i);
 				var staticbody2d_target_walls = tilemaps[n-1].find_node(Globals.STATIC_BODY_WALLS_NAME, false, false);
 				
@@ -177,7 +177,7 @@ The CP2D is intended not for the tilemap it originates from, but the
 tilemap 'below' it (in height).  As such, the positions of the walls 
 are shifted down by Globals.TILE_HEIGHT.
 """
-func build_cp2d_wall_and_shift(edge_collection : EdgeCollection, tilemap_index : int) -> CollisionPolygon2D: #void?
+func build_cp2d_wall_and_shift(edge_collection : EdgeCollection) -> CollisionPolygon2D: #void?
 	var cp2d_walls : CollisionPolygon2D = construct_collision_poly(edge_collection.get_smoothed_collection());
 	cp2d_walls.build_mode = CollisionPolygon2D.BUILD_SEGMENTS;
 	

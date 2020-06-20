@@ -21,7 +21,7 @@ onready var gui = find_node("GUI");
 func _ready():
 	if (!sun || !moon || !camera2d || !gui):
 		print("Missing a resource in main controller.  Sun: " + str(sun) + ", Moon: " + str(moon) + ", Cam2D" + str(camera2d) + ", GUI: " + str(gui));
-		
+
 	sun.player_role = Globals.BACKLINE;
 	moon.player_role = Globals.FRONTLINE;
 

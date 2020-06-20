@@ -13,7 +13,7 @@ Contains functions that are useful to have globally.
 """
 Init an empty 2D array of some size. 
 """
-func init_2d_array(size : int):
+func init_2d_array(size : int) -> Array:
 	var array2d : Array = [];
 	array2d.resize(size);
 	for i in range(array2d.size()):
@@ -23,7 +23,7 @@ func init_2d_array(size : int):
 """
 Init an empty 3D array of some size. 
 """
-func init_3d_array(size : int):
+func init_3d_array(size : int) -> Array:
 	var array3d : Array = [];
 	array3d.resize(size);
 	for i in range(array3d.size()):
@@ -34,7 +34,7 @@ func init_3d_array(size : int):
 Returns an array containing objects that 
 appear in the ORIGINAL array but not the COMPARISON array.
 """
-func set_difference(original_array : Array, comparison_array : Array):
+func set_difference(original_array : Array, comparison_array : Array) -> Array:
 	var difference_array : Array = [];
 	for element in original_array:
 		if (!comparison_array.has(element)):
