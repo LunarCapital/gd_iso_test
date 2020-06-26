@@ -17,10 +17,10 @@ on the maximum matching of the graph.  The dictionary is formatted as follows:
 """
 func run_bipartite_ff(bipart_graph : BipartiteGraph) -> Dictionary:
 	var max_matching : Dictionary = {};
-	var nodes_to_ids : Dictionary = _fill_nodes_ids_dict(bipart_graph);
-	var capacity_network : Array = _init_capacity_network(bipart_graph, nodes_to_ids);
+	var nodes_ids_map : Dictionary = _fill_nodes_ids_dict(bipart_graph);
+	var capacity_network : Array = _init_capacity_network(bipart_graph, nodes_ids_map);
 	print(capacity_network);
-	var flow_network : Array = _init_flow_network(nodes_to_ids);
+	var flow_network : Array = _init_flow_network(nodes_ids_map);
 	var residual_network : Array = capacity_network.duplicate(); # initial residual network is same as capacity network
 	
 	var path : Array = _get_augmenting_path(residual_network);
@@ -32,7 +32,7 @@ func run_bipartite_ff(bipart_graph : BipartiteGraph) -> Dictionary:
 		#print("path size: " + str(path.size()));
 		#print(path);
 	
-	max_matching = _get_max_matching(flow_network, nodes_to_ids);
+	max_matching = _get_max_matching(flow_network, nodes_ids_map);
 	return max_matching;
 	
 ###########################
@@ -45,48 +45,48 @@ func run_bipartite_ff(bipart_graph : BipartiteGraph) -> Dictionary:
 Based off some input bipartite graph, attaches an ID to each node and returns
 a 2-way dictionary containing info of what a node's id is and what an id's node
 is like so:
-	nodes_to_ids[node] => id
-	nodes_to_ids[id] => node
+	nodes_ids_map[node] => id
+	nodes_ids_map[id] => node
 """
 func _fill_nodes_ids_dict(bipart_graph : BipartiteGraph) -> Dictionary:
-	var nodes_to_ids : Dictionary = {};
-	nodes_to_ids[SOURCE] = 0;
-	nodes_to_ids[0] = SOURCE;
+	var nodes_ids_map : Dictionary = {};
+	nodes_ids_map[SOURCE] = 0;
+	nodes_ids_map[0] = SOURCE;
 	var id : int = 1;
 	
 	for left_node in bipart_graph.left_nodes:
-		nodes_to_ids[left_node] = id;
-		nodes_to_ids[id] = left_node;
+		nodes_ids_map[left_node] = id;
+		nodes_ids_map[id] = left_node;
 		id += 1;
 	for right_node in bipart_graph.right_nodes:
-		nodes_to_ids[right_node] = id;
-		nodes_to_ids[id] = right_node;
+		nodes_ids_map[right_node] = id;
+		nodes_ids_map[id] = right_node;
 		id += 1;
 	
-	nodes_to_ids[SINK] = id;
-	nodes_to_ids[id] = SINK;
+	nodes_ids_map[SINK] = id;
+	nodes_ids_map[id] = SINK;
 	
-	return nodes_to_ids;
+	return nodes_ids_map;
 
 """
 Initialises the capacity network as a 2D integer array with the following format:
 	capacity_network[u][v] => capacity from u to v.
 """
-func _init_capacity_network(bipart_graph : BipartiteGraph, nodes_to_ids : Dictionary) -> Array:
+func _init_capacity_network(bipart_graph : BipartiteGraph, nodes_ids_map : Dictionary) -> Array:
 	var capacity_network : Array = [];
-	var num_of_nodes : int = nodes_to_ids.keys().size()/2; # "bi-dict" so we halve it
+	var num_of_nodes : int = nodes_ids_map.keys().size()/2; # "bi-dict" so we halve it
 	
-	for node in nodes_to_ids.keys():
+	for node in nodes_ids_map.keys():
 		var capacities : Array = _init_array_of_zeroes(num_of_nodes);
 		if node is String: #if key is source or sink. we do nothing if sink, because sink has no connections
 			if node == SOURCE:
 				for left_node in bipart_graph.left_nodes: # conn to all left nodes
-					capacities[nodes_to_ids[left_node]] = 1; 
+					capacities[nodes_ids_map[left_node]] = 1; 
 				
 		if node is Chord: #node is left or right bipartite nodes
 			if bipart_graph.left_nodes.has(node):
-				for conn_node in bipart_graph.left_edges[node]:
-					capacities[nodes_to_ids[conn_node]] = 1; # conn to any connected right nodes
+				for conn_node in bipart_graph.adj_matrix[bipart_graph.vertices_id_map[node]]:
+					capacities[conn_node] = 1; # conn to any connected right nodes
 			elif bipart_graph.right_nodes.has(node):
 				capacities[-1] = 1; # conn to sink
 			
@@ -100,9 +100,9 @@ Initialises the flow network, which is simple because all nodes initially have
 0 flow to each other.  Formatted as a 2D integer array:
 	flow_network[u][v] => Flow from u to v.
 """
-func _init_flow_network(nodes_to_ids : Dictionary) -> Array:
+func _init_flow_network(nodes_ids_map : Dictionary) -> Array:
 	var flow_network : Array = [];
-	var num_of_nodes : int = nodes_to_ids.keys().size()/2; 
+	var num_of_nodes : int = nodes_ids_map.keys().size()/2; 
 	
 	for _i in range(num_of_nodes):
 		var flows : Array = _init_array_of_zeroes(num_of_nodes);
@@ -217,14 +217,14 @@ the flow network and returns the results in a dictionary formatted
 as follows:
 	max_matching[v_node] => u_node;
 """
-func _get_max_matching(flow_network : Array, nodes_to_ids) -> Dictionary:
+func _get_max_matching(flow_network : Array, nodes_ids_map) -> Dictionary:
 	var max_matching : Dictionary = {};
 	var num_of_nodes : int = flow_network.size();
 	
 	for i in range(1, num_of_nodes - 1):
 		for j in range(1, num_of_nodes - 1):
 			if flow_network[i][j] > 0: # bipartite u-v connection detected
-				var v_node = nodes_to_ids[i];
-				var u_node = nodes_to_ids[j];
+				var v_node = nodes_ids_map[i];
+				var u_node = nodes_ids_map[j];
 				max_matching[v_node] = u_node;
 	return max_matching;

@@ -9,7 +9,7 @@
 config_version=4
 
 _global_script_classes=[ {
-"base": "Node",
+"base": "Graph",
 "class": "BipartiteGraph",
 "language": "GDScript",
 "path": "res://scripts/Controllers/TileControllerUtilities/BipartiteGraph.gd"
@@ -44,7 +44,12 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://scripts/Entities/Entity.gd"
 }, {
-"base": "Node",
+"base": "Reference",
+"class": "Graph",
+"language": "GDScript",
+"path": "res://scripts/Utilities/Graph.gd"
+}, {
+"base": "Graph",
 "class": "MinCyclesGraph",
 "language": "GDScript",
 "path": "res://scripts/Controllers/TileControllerUtilities/MinCyclesGraph.gd"
@@ -67,6 +72,7 @@ _global_script_class_icons={
 "EdgeCollection": "",
 "Enemy": "",
 "Entity": "",
+"Graph": "",
 "MinCyclesGraph": "",
 "Player": "",
 "TilePerimeter": ""

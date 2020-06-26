@@ -98,8 +98,8 @@ func _split_into_chordless_polygons(arr_carte_perims : Array) -> Array:
 	var bipart_graph : BipartiteGraph = _create_bipartite(arr_chords);
 	var max_matching : Dictionary = _get_max_matching(bipart_graph);
 	var excluded_left_nodes : Array = _get_left_nodes_excluded(bipart_graph, max_matching);
-	var dfs_cover : Array = bipart_graph.dfs(excluded_left_nodes);
-	var max_vertex_cover : Array = bipart_graph.get_MVC(dfs_cover);
+	var dfs_cover : Array = bipart_graph.dfs_and_get_visited(bipart_graph.convert_verts_to_ids(excluded_left_nodes));
+	var max_vertex_cover : Array = bipart_graph.get_MVC(bipart_graph.convert_ids_to_verts(dfs_cover));
 	var max_independent_set : Array = bipart_graph.get_MIS(max_vertex_cover);
 	
 	var arr_chordless_polygons : Array = _split_polygon_into_chordless(arr_carte_perims, max_independent_set);
@@ -154,7 +154,7 @@ func _is_chord_valid(vertex_a : Vector2, vertex_b : Vector2, arr_carte_perims : 
 					var edge_b = arr_vertexes[i];
 					
 					var orientations_identical : bool = _are_orientations_identical(vertex_a, vertex_b, edge_a, edge_b);
-					var segments_intersect : bool = _do_lines_intersect(vertex_a, vertex_b, edge_a, edge_b);
+					var segments_intersect : bool = Functions.line_line(vertex_a, vertex_b, edge_a, edge_b);
 					if orientations_identical and segments_intersect:
 						chord_contains_perimeter = true;
 					
@@ -180,8 +180,10 @@ func _create_bipartite(arr_chords : Array) -> BipartiteGraph:
 	for left_node in bipart_graph.left_nodes:
 		for right_node in bipart_graph.right_nodes:
 			if _do_chords_intersect(left_node, right_node):
-				bipart_graph.left_edges[left_node].append(right_node);
-				bipart_graph.right_edges[right_node].append(left_node);
+				var left_node_id = bipart_graph.vertices_id_map[left_node];
+				var right_node_id = bipart_graph.vertices_id_map[right_node];
+				bipart_graph.adj_matrix[left_node_id][right_node_id] = 1;
+				bipart_graph.adj_matrix[right_node_id][left_node_id] = 1;
 	
 	return bipart_graph;
 
@@ -194,40 +196,8 @@ func _do_chords_intersect(chord1 : Chord, chord2: Chord) -> bool:
 	var line2_a : Vector2 = Vector2(chord2.a.x, chord2.a.y);
 	var line2_b : Vector2 = Vector2(chord2.b.x, chord2.b.y);
 	
-	return _do_lines_intersect(line1_a, line1_b, line2_a, line2_b);
+	return Functions.line_line(line1_a, line1_b, line2_a, line2_b);
 
-"""
-Runs line-line algo on two lines.  *_a and *_b are the first and second points of 
-line *, respectively.
-"""
-func _do_lines_intersect(line1_a : Vector2, line1_b : Vector2, line2_a : Vector2, line2_b : Vector2) -> bool:
-	if (line1_a == line2_a and line1_b == line2_b) or (line1_a == line2_b and line1_b == line2_a):
-		return true; # same line
-	
-	var x1 : float = line1_a.x;
-	var y1 : float = line1_a.y;
-	var x2 : float = line1_b.x;
-	var y2 : float = line1_b.y;
-	var x3 : float = line2_a.x;
-	var y3 : float = line2_a.y;
-	var x4 : float = line2_b.x;
-	var y4 : float = line2_b.y;
-	
-	var uA : float = 0;
-	var uB : float = 0;
-
-	if ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1)) == 0:
-		uA = INF;
-		uB = INF;
-	else:
-		uA = ((x4-x3)*(y1-y3) - (y4-y3)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1));
-		uB = ((x2-x1)*(y1-y3) - (y2-y1)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1));
-		
-	if (uA >= 0 && uA <= 1 && uB >= 0 && uB <= 1):
-		return true;
-	else:
-		return false;	
-	
 """
 Checks if orientations (or slope) for two lines are identical.
 In this case lines are either horizontal or vertical which makes things simpler.

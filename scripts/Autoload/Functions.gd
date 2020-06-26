@@ -41,6 +41,17 @@ func set_difference(original_array : Array, comparison_array : Array) -> Array:
 			difference_array.append(element);
 	return difference_array;
 
+"""
+Returns an array containing objects that
+appear in both the ORIGINAL array AND the COMPARISON array.
+"""
+func set_and(original_array : Array, comparison_array : Array) -> Array:
+	var and_array : Array = [];
+	for element in original_array:
+		if comparison_array.has(element):
+			and_array.append(element);
+	return and_array;
+
 ###########################
 ###########################
 #####GEOMETRY UTILITY######
@@ -58,6 +69,39 @@ func get_area_of_polygon(polygon : Array) -> float:
 		area += (edge.b.x * edge.a.y - edge.b.y * edge.a.x);
 	area = abs(area/2);
 	return area;
+
+"""
+Runs line-line algo on two lines.  *_a and *_b are the first and second points of 
+line *, respectively.
+"""
+func line_line(line1_a : Vector2, line1_b : Vector2, line2_a : Vector2, line2_b : Vector2) -> bool:
+	if (line1_a == line2_a and line1_b == line2_b) or (line1_a == line2_b and line1_b == line2_a):
+		return true; # same line
+	
+	var x1 : float = line1_a.x;
+	var y1 : float = line1_a.y;
+	var x2 : float = line1_b.x;
+	var y2 : float = line1_b.y;
+	var x3 : float = line2_a.x;
+	var y3 : float = line2_a.y;
+	var x4 : float = line2_b.x;
+	var y4 : float = line2_b.y;
+	
+	var uA : float = 0;
+	var uB : float = 0;
+
+	if ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1)) == 0:
+		uA = INF;
+		uB = INF;
+	else:
+		uA = ((x4-x3)*(y1-y3) - (y4-y3)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1));
+		uB = ((x2-x1)*(y1-y3) - (y2-y1)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1));
+		
+	if (uA >= 0 && uA <= 1 && uB >= 0 && uB <= 1):
+		return true;
+	else:
+		return false;	
+	
 
 ###########################
 ###########################

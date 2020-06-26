@@ -1,48 +1,38 @@
-extends Node
+extends Graph
 class_name BipartiteGraph
 """
 Representation of a bipartite graph.
 
-left and right are arrays that contain nodes of each side of the graph respectively.
-
-left_edges and right_edges are formatted as so:
-	left_edges[left[i]] => edges : Array = [edge1, edge2, edge3...]
+left/right_nodes are arrays that store info on which nodes are on the left/right side
+respectively.  They should contain the node and NOT its ID.
 """
 
 #VARIABLES
 var left_nodes : Array = [];
 var right_nodes : Array = [];
-var left_edges : Dictionary = {};
-var right_edges : Dictionary = {};
 
+"""
+Initialises bipartite graph based on input left and right nodes.
+"""
 func _init(left_input_nodes : Array, right_input_nodes : Array):
 	left_nodes = left_input_nodes;
 	right_nodes = right_input_nodes;
 	
+	var total_nodes : int = left_nodes.size() + right_nodes.size();
+	var empty_array : Array = [];
+	var id : int = 0;
+	
+	for i in range(total_nodes):
+		empty_array.append(0);
+	
 	for node in left_nodes:
-		left_edges[node] = [];
+		vertices_id_map[node] = id;
+		id += 1;
+		adj_matrix.append(empty_array.duplicate());
 	for node in right_nodes:
-		right_edges[node] = [];
-
-"""
-Runs DFS across bipartite graph using some input start nodes.
-Outputs an array containing all nodes spanned by the DFS.
-"""
-func dfs(start_nodes : Array) -> Array:
-	var visited : Array = [];
-	var stack : Array = [];
-	visited += start_nodes;
-	stack += start_nodes;
-	
-	while stack.size() > 0:
-		var node = stack.pop_back();
-		var neighbours : Array = left_edges[node] if left_edges.has(node) else right_edges[node];
-		
-		for neighbour in neighbours:
-			if !visited.has(neighbour):
-				stack.push_back(neighbour);
-	
-	return visited;
+		vertices_id_map[node] = id;
+		id += 1;
+		adj_matrix.append(empty_array.duplicate());
 
 """
 Given the results of a DFS on the bipartite graph that covers some nodes, returns
