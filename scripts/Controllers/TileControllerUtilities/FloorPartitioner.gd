@@ -95,6 +95,8 @@ chords.  A breakdown of this method is as follows:
 """
 func _split_into_chordless_polygons(arr_carte_perims : Array) -> Array:
 	var arr_chords : Array = _find_chords(arr_carte_perims);
+	for chord in arr_chords:
+		print(str(chord.a) + " " + str(chord.b));
 	var bipart_graph : BipartiteGraph = _create_bipartite(arr_chords);
 	var max_matching : Dictionary = _get_max_matching(bipart_graph);
 	var excluded_left_nodes : Array = _get_left_nodes_excluded(bipart_graph, max_matching);
@@ -150,15 +152,15 @@ func _is_chord_valid(vertex_a : Vector2, vertex_b : Vector2, arr_carte_perims : 
 		if vertex_a.x == vertex_b.x or vertex_a.y == vertex_b.y: # IF VERTICAL/HORIZONTAL LINE
 			for arr_vertexes in arr_carte_perims: #IF SEGMENT DOES NOT CONTAIN PERIMETER
 				for i in range(arr_vertexes.size()):
-					var edge_a = arr_vertexes[i-1];
-					var edge_b = arr_vertexes[i];
+					var edge_a : Vector2 = arr_vertexes[i-1];
+					var edge_b : Vector2 = arr_vertexes[i];
 					
 					var orientations_identical : bool = _are_orientations_identical(vertex_a, vertex_b, edge_a, edge_b);
 					var segments_intersect : bool = Functions.line_line(vertex_a, vertex_b, edge_a, edge_b);
 					if orientations_identical and segments_intersect:
 						chord_contains_perimeter = true;
 					
-			if not chord_contains_perimeter:
+			if !chord_contains_perimeter:
 				return true;
 	return false;
 
@@ -211,6 +213,7 @@ func _are_orientations_identical(line1_a : Vector2, line1_b : Vector2, line2_a :
 	if (run1 == 0 and run2 == 0) or (rise1 == 0 and rise2 == 0):
 		return true;
 	else:
+		print(str(run1) + ", " + str(rise1) + ", " + str(run2) + ", " + str(rise2));
 		return false;
 
 """

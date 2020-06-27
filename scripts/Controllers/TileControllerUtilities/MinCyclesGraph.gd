@@ -47,7 +47,7 @@ Take all vertices from the polygon (holes included) and append to
 an array.
 """
 func _init_vertices(polygon_perims : Array) -> Array:
-	var vertices : Array= [];
+	var vertices : Array = [];
 	for perim in polygon_perims:
 		for vertex in perim:
 			if !vertices.has(vertex):
@@ -141,25 +141,31 @@ func get_min_cycles() -> Array:
 	
 	# ALGO
 	# DFS nodes until we have enough 'covers' for the whole graph
-	var connected_groups : Array = _get_connected_groups();
+	var connected_groups : Array = _get_connected_groups(); # array of MinCyclesGroups
+	connected_groups.sort_custom(self, MinCyclesGroup.SORT_FUNC);
+	print(connected_groups.size());
 	# find outer perimeter for EACH cover
-	var connected_groups_perimeter : Array = _get_groups_perimeters(connected_groups);
+		# now handled in MinCyclesGroups object
 	# try and put covers inside each other (aka check if cover A contains cover B)
 		# organise it (consider C inside B and A, B inside A. technically C only needs
 		# to be marked as being inside B), AKA make sure covers have at most 1 parent
-	var group_contains : Dictionary = _build_group_contains_poly(connected_groups, connected_groups_perimeter); # dict that stores 
-
+	var group_contains : Dictionary = _build_group_contains_poly(connected_groups); # dict that stores what groups contain other groups
 	group_contains = _simplify_group_contains(group_contains);
+	
+	
 	
 	# NEED TO CHANGE HOW "liVES" WORK
 	# vertice is made unavailable IFF all its edges are used in min cycles
 	# instead of finding cycle of vertex with 1 life, should be
 		# finding cycle of vertex with vertex with 2 unused edges
-		#need lookup of:
+		# need lookup of:
 			# vertexes with exactly 2 unused edges
 			# vertexes that are no longer available
 		# need some way to:
 			# store info on edges that have been 'used up'
+			
+		# duplicate adj matrix, remove edges as we use them?
+		# function to iterate over available vertexes and check adj matrix, returns vertices with 2 lives
 	
 	# for each cover, starting at the biggest
 		# while vertices still have lives <= doesn't work in the 1 hole cut corner shape
@@ -201,12 +207,8 @@ func get_min_cycles() -> Array:
 
 """
 Uses DFS to find groups of connected vertices in the graph.  Returns these
-groups as a 2D array with the format:
-	connected_groups[0] = [0 1 2 3], 0th group
-	connected_groups[1] = [4 5 6 7 8 9], 1st group
-	connected_groups[i] = [some connected group], i'th group
-	,etc, and so on.  Note that the index i does NOT correspond to 'give me all
-	vertices connected to i', it's just a group index.
+groups as a 2D array of MinCyclesGroups, which stores node IDs (and not node
+Vector2s).  
 """
 func _get_connected_groups() -> Array:
 	var connected_groups : Array = [];
@@ -219,64 +221,10 @@ func _get_connected_groups() -> Array:
 			var connected_to_i : Array = dfs_and_get_visited([i]);
 			for vertex in connected_to_i: 
 				vertice_visited[vertex] = true; # mark as visited
-			connected_groups.append(connected_to_i);
+			var new_min_cycles_group : MinCyclesGroup = MinCyclesGroup.new(connected_to_i, adj_matrix, vertices_id_map);
+			connected_groups.append(new_min_cycles_group);
 	
 	return connected_groups;
-
-"""
-Given an input of connected groups, finds their perimeters and returns them.
-Returned array stored as:
-	perimeters[0] = [0 3 1 5] or something. Vertices are CCW order.
-Method is as follows:
-	1. get node with smallest x. if multiple exist, pick node with smallest y.
-	2. define bearing as being in the negative Y direction as there are no 
-		available nodes in that direction
-	3. out of valid edges from current node, pick the one with the least positive
-		CCW angle change from the bearing
-	4. new bearing = direction from NEW node TO OLD node
-	5. repeat until we get back to start node
-	
-"""
-func _get_groups_perimeters(connected_groups : Array) -> Array:
-	var perimeters : Array = [];
-	for group in connected_groups:
-		var group_perim : Array = [];
-		var start_node : int = connected_groups.min(); # nodes are sorted by minx then miny so this lowest index = start. christ for weakly typed script min() is dangerous thsi makes me very nerovus
-		var bearing : Vector2 = Vector2(0, -1);
-		var current_node : int = start_node;
-		while current_node != start_node and group_perim.size() > 1: # you see if we had do->while loops i wouldn't need the 2nd condition
-			var neighbours : Array = adj_matrix[current_node];
-			var valid_neighbours : Array = Functions.set_and(neighbours, group); # ensure we only choose neighbours that are also in the same group
-			var next_neighbour : int  = _choose_next_neighbour(current_node, bearing, valid_neighbours);
-			bearing = (vertices_id_map[next_neighbour] - vertices_id_map[current_node]).normalized();
-			group_perim.append(current_node);
-			current_node = next_neighbour;
-		perimeters.append(group_perim);
-		
-	return perimeters;
-
-"""
-A function used to draw the perimeter of a bunch of edges (and vertices).  Given
-the current node, bearing (for direction) and a list of its valid neighbours, 
-picks the 'next' neighbour which is the one with the LEAST positive CCW angle
-change from the bearing.  Excludes angle of 0 degrees because that means we'd
-just be going back to the previous node.
-
-This ensures that given multiple valid neighbours we always pick the 'outermost'
-one.
-"""
-func _choose_next_neighbour(current_node, bearing, valid_neighbours) -> int:
-	var min_angle : float = 360;
-	var current_solution : int = valid_neighbours[0];
-	for neighbour in valid_neighbours:
-		var neighbour_direction : Vector2 = vertices_id_map[neighbour] - vertices_id_map[current_node];
-		neighbour_direction = neighbour_direction.normalized();
-		var angle_diff : float = abs(rad2deg(atan2(bearing.y, bearing.x) - atan2(neighbour_direction.y, neighbour_direction.x))); # get angle difference CCW 
-		if angle_diff < min_angle:
-			min_angle = angle_diff;
-			current_solution = neighbour;
-	
-	return current_solution;
 
 """
 Forms a dictionary of group INDEXES that map to arrays containing INDEXES of
@@ -284,14 +232,14 @@ all groups contained (geometrically) within the key group.  For example, if
 group A (which is a polygon) contains groups B, C and D within it:
 	group_contains[A] = [B C D]
 """
-func _build_group_contains_poly(groups : Array, group_perims : Array) -> Dictionary:
+func _build_group_contains_poly(groups : Array) -> Dictionary:
 	var group_contains : Dictionary = {};
 	for i in range(groups.size()):
 		group_contains[i] = [];
 		for j in range(groups.size()): # check if J is in I
 			if i == j:
 				continue;
-			if _is_poly_in_poly(groups[j], groups[i]):
+			if _is_poly_in_poly(groups[j].perim, groups[i].perim):
 				group_contains[i].append(j);
 		
 	return group_contains;

@@ -19,7 +19,7 @@ func run_bipartite_ff(bipart_graph : BipartiteGraph) -> Dictionary:
 	var max_matching : Dictionary = {};
 	var nodes_ids_map : Dictionary = _fill_nodes_ids_dict(bipart_graph);
 	var capacity_network : Array = _init_capacity_network(bipart_graph, nodes_ids_map);
-	print(capacity_network);
+	print(capacity_network.size());
 	var flow_network : Array = _init_flow_network(nodes_ids_map);
 	var residual_network : Array = capacity_network.duplicate(); # initial residual network is same as capacity network
 	
